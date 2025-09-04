@@ -1,12 +1,210 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { NegotiationCard, IssueCategory } from '../types';
+import { reportApi } from '../lib/api';
 
-const NegotiationGuide: React.FC = () => {
+interface NegotiationGuideProps {
+  userId?: string;
+}
+
+const NegotiationGuide: React.FC<NegotiationGuideProps> = ({ userId = 'user_123' }) => {
+  const [negotiationCards, setNegotiationCards] = useState<NegotiationCard[]>([]);
+  const [negotiationScenario, setNegotiationScenario] = useState<string>('');
+  const [successRate, setSuccessRate] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchNegotiationData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 협상 카드, 시나리오, 성공 확률을 병렬로 가져오기
+        const [cardsResponse, scenarioResponse, successRateResponse] = await Promise.all([
+          reportApi.getNegotiationCards(userId),
+          reportApi.getNegotiationScenario(userId),
+          reportApi.getNegotiationSuccessRate(userId)
+        ]);
+
+        if (cardsResponse.ok) {
+          setNegotiationCards(cardsResponse.data || []);
+        }
+
+        if (scenarioResponse.ok) {
+          setNegotiationScenario(scenarioResponse.data || '');
+        }
+
+        if (successRateResponse.ok) {
+          setSuccessRate(successRateResponse.data || 0);
+        }
+
+      } catch (err) {
+        console.error('Error fetching negotiation data:', err);
+        setError('협상 데이터를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNegotiationData();
+  }, [userId]);
+
+  const getCategoryColor = (category: IssueCategory) => {
+    switch (category) {
+      case IssueCategory.LEGAL_REPAIR:
+        return 'bg-red-50 border-red-200 text-red-800';
+      case IssueCategory.STRUCTURAL:
+        return 'bg-yellow-50 border-yellow-200 text-yellow-800';
+      case IssueCategory.GENERAL:
+        return 'bg-blue-50 border-blue-200 text-blue-800';
+      default:
+        return 'bg-gray-50 border-gray-200 text-gray-800';
+    }
+  };
+
+  const getCategoryLabel = (category: IssueCategory) => {
+    switch (category) {
+      case IssueCategory.LEGAL_REPAIR:
+        return '법적 수선 의무';
+      case IssueCategory.STRUCTURAL:
+        return '구조적 문제';
+      case IssueCategory.GENERAL:
+        return '일반적 문제';
+      default:
+        return '기타';
+    }
+  };
+
+  const getPriorityLabel = (priority: number) => {
+    switch (priority) {
+      case 1:
+        return '높음';
+      case 2:
+        return '보통';
+      case 3:
+        return '낮음';
+      default:
+        return '보통';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">협상 데이터를 불러오는 중...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="text-center">
+            <h2 className="text-xl font-bold text-red-600 mb-4">데이터 로딩 실패</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            >
+              다시 시도
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white shadow rounded-lg p-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-6">
-          협상 근거 가이드
+          맞춤형 협상 가이드
         </h1>
+
+        {/* 협상 성공 확률 및 시나리오 */}
+        {successRate > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">📊 협상 성공 예측</h2>
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-medium text-green-900">예상 성공 확률</h3>
+                <div className="text-3xl font-bold text-green-600">
+                  {Math.round(successRate * 100)}%
+                </div>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3 mb-4">
+                <div 
+                  className="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-1000"
+                  style={{ width: `${successRate * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-green-800 text-sm">
+                {successRate >= 0.7 ? '높은 성공 가능성' : 
+                 successRate >= 0.4 ? '보통 성공 가능성' : '신중한 접근 필요'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* 맞춤형 협상 시나리오 */}
+        {negotiationScenario && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">🎯 맞춤형 협상 시나리오</h2>
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-6">
+              <div className="prose prose-purple max-w-none">
+                <p className="text-purple-800 leading-relaxed whitespace-pre-line">
+                  {negotiationScenario}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 맞춤형 협상 카드 */}
+        {negotiationCards.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">🎴 맞춤형 협상 카드</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {negotiationCards
+                .sort((a, b) => a.priority - b.priority)
+                .map((card, index) => (
+                  <div key={card.issueId} className={`border rounded-lg p-4 ${getCategoryColor(card.category)}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-lg font-medium">{card.issueName}</h3>
+                      <span className="text-xs px-2 py-1 bg-white bg-opacity-50 rounded-full">
+                        우선순위: {getPriorityLabel(card.priority)}
+                      </span>
+                    </div>
+                    <p className="text-sm mb-3 opacity-90">{card.description}</p>
+                    <div className="space-y-2">
+                      <div>
+                        <h4 className="font-medium text-sm mb-1">협상 전략:</h4>
+                        <p className="text-sm opacity-90">{card.negotiationStrategy}</p>
+                      </div>
+                      {card.legalBasis && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">법적 근거:</h4>
+                          <p className="text-sm opacity-90">{card.legalBasis}</p>
+                        </div>
+                      )}
+                      {card.suggestedAction && (
+                        <div>
+                          <h4 className="font-medium text-sm mb-1">제안 행동:</h4>
+                          <p className="text-sm opacity-90">{card.suggestedAction}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {/* 법적 근거 */}
         <div className="mb-8">

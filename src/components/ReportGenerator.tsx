@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { ComprehensiveDiagnosis, MarketData, NegotiationReport, User } from '../types';
+import ReportSharing from './ReportSharing';
 
 interface ReportGeneratorProps {
   currentUser: User;
@@ -25,39 +26,59 @@ export default function ReportGenerator({
 }: ReportGeneratorProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<NegotiationReport | null>(null);
+  const [showSharing, setShowSharing] = useState(false);
 
   const { register, handleSubmit } = useForm<ReportFormData>();
 
   const generateReport = async (data: ReportFormData) => {
     setIsGenerating(true);
     try {
-      // 리포트 URL 생성 (실제로는 고유한 URL이어야 함)
-      const reportId = `report_${Date.now()}`;
-      const reportUrl = `${window.location.origin}/report/${reportId}`;
+      // 백엔드에서 공유 리포트 생성
+      const response = await fetch('/api/reports/share', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: currentUser.id,
+          title: data.title || `${currentUser.nickname}님의 거주 환경 분석 리포트`,
+          summary: data.summary || generateSummary(diagnosisData)
+        })
+      });
 
-      // 키 포인트 자동 생성
-      const keyFindings = generateKeyFindings(diagnosisData);
+      const result = await response.json();
       
-      // 추천사항 자동 생성
-      const recommendations = generateRecommendations(diagnosisData);
+      if (result.ok) {
+        const sharedReport = result.data;
+        
+        // 키 포인트 자동 생성
+        const keyFindings = generateKeyFindings(diagnosisData);
+        
+        // 추천사항 자동 생성
+        const recommendations = generateRecommendations(diagnosisData);
 
-      const report: NegotiationReport = {
-        id: reportId,
-        userId: currentUser.id || '',
-        reportUrl,
-        title: data.title || `${currentUser.nickname}님의 거주 환경 분석 리포트`,
-        summary: data.summary || generateSummary(diagnosisData),
-        keyFindings,
-        recommendations,
-        marketData,
-        diagnosisData,
-        createdAt: new Date().toISOString(),
-        isShared: false
-      };
+        const report: NegotiationReport = {
+          id: sharedReport.reportId,
+          userId: currentUser.id || '',
+          reportUrl: `${window.location.origin}${sharedReport.reportUrl}`,
+          shareToken: sharedReport.shareToken,
+          title: sharedReport.title,
+          summary: sharedReport.summary,
+          keyFindings,
+          recommendations,
+          marketData,
+          diagnosisData,
+          createdAt: new Date().toISOString(),
+          isShared: true
+        };
 
-      setGeneratedReport(report);
-      onReportGenerated(report);
-      toast.success('리포트가 성공적으로 생성되었습니다!');
+        setGeneratedReport(report);
+        onReportGenerated(report);
+        toast.success('리포트가 성공적으로 생성되었습니다!');
+        setShowSharing(true);
+      } else {
+        toast.error(result.message || '리포트 생성에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Report generation error:', error);
       toast.error('리포트 생성 중 오류가 발생했습니다.');
@@ -248,6 +269,14 @@ export default function ReportGenerator({
           </button>
         </form>
       </div>
+      
+      {/* 리포트 공유 모달 */}
+      {showSharing && generatedReport && (
+        <ReportSharing 
+          report={generatedReport} 
+          onClose={() => setShowSharing(false)} 
+        />
+      )}
     </div>
   );
 }

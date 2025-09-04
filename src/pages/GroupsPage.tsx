@@ -21,7 +21,21 @@ export default function GroupsPage({ currentUser }: GroupsPageProps) {
     try {
       const response = await groupApi.getGroups(scope);
       if (response.ok) {
-        setGroups(response.data || []);
+        // 중복된 groupId를 가진 그룹들을 제거
+        const uniqueGroups = (response.data || []).reduce((acc: Group[], current: Group) => {
+          const existingGroup = acc.find(group => group.groupId === current.groupId);
+          if (!existingGroup) {
+            acc.push(current);
+          } else {
+            // 중복된 그룹이 있으면 더 많은 세입자를 가진 그룹을 유지
+            if (current.groupSize > existingGroup.groupSize) {
+              const index = acc.findIndex(group => group.groupId === current.groupId);
+              acc[index] = current;
+            }
+          }
+          return acc;
+        }, []);
+        setGroups(uniqueGroups);
       } else {
         toast.error(response.message || '그룹을 불러오는데 실패했습니다');
       }

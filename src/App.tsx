@@ -6,6 +6,7 @@ import TenantForm from './pages/TenantForm';
 import GroupsPage from './pages/GroupsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ReportView from './pages/ReportView';
+import SharedReportView from './pages/SharedReportView';
 import AuthForm from './components/AuthForm';
 import AdminDashboard from './components/AdminDashboard';
 import AnonymousReport from './components/AnonymousReport';
@@ -125,6 +126,7 @@ function App() {
             <Route path="/voting" element={<TenantVoting currentUser={currentUser} />} />
             <Route path="/notifications" element={<NotificationsPage currentUser={currentUser} />} />
             <Route path="/report/advanced" element={<ReportView />} />
+            <Route path="/shared-report/:shareToken" element={<SharedReportView />} />
             <Route path="/diagnosis" element={<DiagnosisSystem currentUser={currentUser} onComplete={() => window.location.href = '/'} />} />
             <Route path="/diagnosis/result" element={<DiagnosisResult currentUser={currentUser} />} />
           </Routes>

@@ -3,7 +3,12 @@ export const formatCurrency = (amount: number): string => {
 };
 
 export const formatCurrencyK = (amount: number): string => {
-  return new Intl.NumberFormat('ko-KR').format(amount) + '만원';
+  // 원 단위를 만원 단위로 변환 (10000으로 나누기)
+  const amountInManwon = amount / 10000;
+  return new Intl.NumberFormat('ko-KR', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1
+  }).format(amountInManwon) + '만원';
 };
 
 export const formatDate = (dateString: string): string => {

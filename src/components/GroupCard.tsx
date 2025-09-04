@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Group, User } from '../types';
-import VoteBox from './VoteBox';
 import ProposalModal from './ProposalModal';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface GroupCardProps {
   group: Group;
@@ -17,7 +16,12 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
   };
 
   const formatCurrencyK = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR').format(amount) + '만원';
+    // 원 단위를 만원 단위로 변환 (10000으로 나누기)
+    const amountInManwon = amount / 10000;
+    return new Intl.NumberFormat('ko-KR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1
+    }).format(amountInManwon) + '만원';
   };
 
   return (
@@ -64,24 +68,34 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
       {/* Market Data Visualization */}
       {group.marketData && group.marketData.transactionCount > 0 && (
         <div className="space-y-3 mb-6 p-3 bg-green-50 rounded-md">
-          <h4 className="text-sm font-medium text-green-700 border-b border-green-200 pb-1">
-            시세 비교 ({group.marketData.transactionCount}건 거래)
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-green-700">
+              시세 비교 분석
+            </h4>
+            <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+              {group.marketData.transactionCount}건 거래 기준
+            </span>
+          </div>
+          <p className="text-xs text-gray-600 mt-1">
+            우리 그룹과 시장 평균을 비교하여 협상 포인트를 파악하세요
+          </p>
           
           {/* Rent Comparison Chart */}
-          <div className="h-48 w-full">
+          <div className="h-56 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
                   {
                     name: '우리 그룹',
                     월세: Math.round(group.avgRentKrw / 10000), // Convert to 만원
-                    보증금: Math.round(group.avgRentKrw * 10 / 10000), // Estimate deposit as 10x rent
+                    보증금: Math.round((group.avgRentKrw * 10) / 10000), // Estimate deposit as 10x rent (temporary)
+                    fill: '#3B82F6'
                   },
                   {
                     name: '시장 평균',
                     월세: Math.round(group.marketData.avgMonthlyRent / 10000),
                     보증금: Math.round(group.marketData.avgDeposit / 10000),
+                    fill: '#10B981'
                   }
                 ]}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -92,9 +106,17 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
                 <Tooltip 
                   formatter={(value, name) => [`${value}만원`, name]}
                   labelStyle={{ color: '#374151' }}
+                  contentStyle={{ 
+                    backgroundColor: '#f9fafb', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '6px'
+                  }}
                 />
-                <Bar dataKey="월세" fill="#3B82F6" name="월세" />
-                <Bar dataKey="보증금" fill="#10B981" name="보증금" />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px' }}
+                />
+                <Bar dataKey="월세" fill="#3B82F6" name="월세" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="보증금" fill="#10B981" name="보증금" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -115,6 +137,57 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
             </div>
           </div>
           
+          {/* Market Analysis */}
+          <div className="bg-white p-3 rounded border">
+            <div className="text-xs text-gray-600 mb-2">시장 분석</div>
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span>월세 차이:</span>
+                <span className={`font-medium ${
+                  group.avgRentKrw > group.marketData.avgMonthlyRent 
+                    ? 'text-red-600' 
+                    : group.avgRentKrw < group.marketData.avgMonthlyRent 
+                    ? 'text-green-600' 
+                    : 'text-gray-600'
+                }`}>
+                  {group.avgRentKrw > group.marketData.avgMonthlyRent ? '+' : ''}
+                  {formatCurrencyK(group.avgRentKrw - group.marketData.avgMonthlyRent)}
+                  {group.marketData.avgMonthlyRent > 0 && (
+                    <span className="ml-1">
+                      ({group.avgRentKrw > group.marketData.avgMonthlyRent ? '+' : ''}
+                      {Math.round(((group.avgRentKrw - group.marketData.avgMonthlyRent) / group.marketData.avgMonthlyRent) * 100)}%)
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>보증금 차이:</span>
+                <span className={`font-medium ${
+                  (group.avgRentKrw * 10) > group.marketData.avgDeposit 
+                    ? 'text-red-600' 
+                    : (group.avgRentKrw * 10) < group.marketData.avgDeposit 
+                    ? 'text-green-600' 
+                    : 'text-gray-600'
+                }`}>
+                  {(group.avgRentKrw * 10) > group.marketData.avgDeposit ? '+' : ''}
+                  {formatCurrencyK((group.avgRentKrw * 10) - group.marketData.avgDeposit)}
+                  {group.marketData.avgDeposit > 0 && (
+                    <span className="ml-1">
+                      ({(group.avgRentKrw * 10) > group.marketData.avgDeposit ? '+' : ''}
+                      {Math.round((((group.avgRentKrw * 10) - group.marketData.avgDeposit) / group.marketData.avgDeposit) * 100)}%)
+                    </span>
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span>거래 건수:</span>
+                <span className="font-medium text-gray-900">
+                  {group.marketData.transactionCount}건
+                </span>
+              </div>
+            </div>
+          </div>
+          
           <div className="text-xs text-green-600">
             최근 거래: {group.marketData.recentTransactionDate}
           </div>
@@ -128,11 +201,6 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
         >
           제안서 생성
         </button>
-        
-        <VoteBox 
-          proposalId={group.groupId} 
-          currentUser={currentUser}
-        />
       </div>
 
       <ProposalModal

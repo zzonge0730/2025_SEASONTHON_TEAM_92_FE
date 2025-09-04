@@ -1,79 +1,140 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { NegotiationReport } from '../types';
+import { NegotiationReport, AdvancedReport } from '../types';
+import { reportApi } from '../lib/api';
 
 export default function ReportView() {
   const { reportId } = useParams<{ reportId: string }>();
   const [report, setReport] = useState<NegotiationReport | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // 실제로는 API에서 리포트 데이터를 가져와야 함
-    // 여기서는 샘플 데이터를 사용
-    const sampleReport: NegotiationReport = {
-      id: reportId || '',
-      userId: 'user_123',
-      reportUrl: '',
-      title: '거주 환경 분석 리포트',
-      summary: '이 리포트는 거주 환경을 종합적으로 분석한 결과입니다.',
-      keyFindings: [
-        '전반적으로 우수한 거주 환경을 보유하고 있습니다.',
-        '소음 문제가 심각합니다.',
-        '동네 평균 월세는 500,000원입니다.'
-      ],
-      recommendations: [
-        '소음 문제가 심각합니다. 방음 시설 개선을 요구해보세요.',
-        '동네 평균 시세를 참고하여 합리적인 협상을 진행하세요.',
-        '데이터 기반의 객관적 근거를 제시하여 협상력을 높이세요.'
-      ],
-      marketData: {
-        neighborhood: '성남동',
-        buildingName: '행복아파트',
-        avgDeposit: 5000000,
-        avgMonthlyRent: 500000,
-        medianDeposit: 4500000,
-        medianMonthlyRent: 480000,
-        transactionCount: 12,
-        recentTransactionDate: '2024-01-15'
-      },
-      diagnosisData: {
-        id: 'diagnosis_123',
-        userId: 'user_123',
-        overallScore: 75,
-        categoryScores: {
-          'noise': 60,
-          'water_pressure': 80,
-          'lighting': 85,
-          'parking': 70,
-          'heating': 75,
-          'security': 90,
-          'elevator': 85,
-          'facilities': 80
-        },
-        buildingComparison: {
-          averageScore: 75,
-          participantCount: 12,
-          rank: 3,
-          percentile: 75
-        },
-        neighborhoodComparison: {
-          averageScore: 72,
-          participantCount: 45,
-          rank: 8,
-          percentile: 82
-        },
-        recommendations: ['소음 문제가 심각합니다. 방음 시설 개선을 요구해보세요.'],
-        createdAt: new Date().toISOString()
-      },
-      createdAt: new Date().toISOString(),
-      isShared: true
+    const fetchReport = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // reportId가 userId로 사용됨 (실제 구현에서는 별도 매핑이 필요할 수 있음)
+        const userId = reportId || 'user_123'; // 임시로 기본값 사용
+        
+        const response = await reportApi.getAdvancedReport(userId);
+        
+        if (response.ok && response.data) {
+          const advancedReport: AdvancedReport = response.data;
+          
+          // AdvancedReport를 NegotiationReport 형식으로 변환
+          const convertedReport: NegotiationReport = {
+            id: reportId || '',
+            userId: userId,
+            reportUrl: '',
+            title: '거주 환경 분석 리포트',
+            summary: `이 리포트는 ${advancedReport.userProfile.neighborhood || '해당 지역'}의 거주 환경을 종합적으로 분석한 결과입니다.`,
+            keyFindings: advancedReport.keyFindings || generateKeyFindings(advancedReport),
+            recommendations: advancedReport.recommendations || generateRecommendations(advancedReport),
+            marketData: advancedReport.marketData,
+            diagnosisData: convertDiagnosisStats(advancedReport.diagnosisStats),
+            createdAt: new Date().toISOString(),
+            isShared: true
+          };
+          
+          setReport(convertedReport);
+        } else {
+          setError(response.message || '리포트를 불러오는데 실패했습니다.');
+        }
+      } catch (err) {
+        console.error('Error fetching report:', err);
+        setError('리포트를 불러오는 중 오류가 발생했습니다.');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setTimeout(() => {
-      setReport(sampleReport);
-      setLoading(false);
-    }, 1000);
+    fetchReport();
   }, [reportId]);
+
+  // AdvancedReport에서 keyFindings 생성
+  const generateKeyFindings = (advancedReport: AdvancedReport): string[] => {
+    const findings: string[] = [];
+    
+    // 시장 데이터 기반 발견사항
+    if (advancedReport.marketData) {
+      findings.push(`${advancedReport.marketData.neighborhood} 지역의 평균 월세는 ${advancedReport.marketData.avgMonthlyRent.toLocaleString()}원입니다.`);
+    }
+    
+    // 진단 통계 기반 발견사항
+    if (advancedReport.diagnosisStats && advancedReport.diagnosisStats.userScores) {
+      const userScores = advancedReport.diagnosisStats.userScores;
+      const lowestScore = Math.min(...Object.values(userScores));
+      const lowestCategory = Object.keys(userScores).find(key => userScores[key] === lowestScore);
+      
+      if (lowestCategory && lowestScore < 60) {
+        findings.push(`${getCategoryLabel(lowestCategory)} 항목의 만족도가 낮습니다 (${lowestScore}점).`);
+      }
+    }
+    
+    // 데이터 신뢰도 기반 발견사항
+    if (advancedReport.dataReliability) {
+      if (advancedReport.dataReliability.buildingParticipantCount > 0) {
+        findings.push(`같은 건물에서 ${advancedReport.dataReliability.buildingParticipantCount}명이 참여하여 신뢰할 수 있는 비교 데이터를 제공합니다.`);
+      }
+    }
+    
+    return findings.length > 0 ? findings : ['종합적인 거주 환경 분석이 완료되었습니다.'];
+  };
+
+  // AdvancedReport에서 recommendations 생성
+  const generateRecommendations = (advancedReport: AdvancedReport): string[] => {
+    const recommendations: string[] = [];
+    
+    // 협상 전략 기반 추천사항
+    if (advancedReport.negotiationStrategies && advancedReport.negotiationStrategies.length > 0) {
+      advancedReport.negotiationStrategies
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 3) // 상위 3개만 표시
+        .forEach(strategy => {
+          recommendations.push(strategy.message);
+        });
+    }
+    
+    // 데이터 신뢰도 기반 추천사항
+    if (advancedReport.dataReliability && !advancedReport.dataReliability.isReportEligible) {
+      recommendations.push(advancedReport.dataReliability.reliabilityMessage);
+    }
+    
+    return recommendations.length > 0 ? recommendations : ['데이터 기반의 객관적 근거를 제시하여 협상력을 높이세요.'];
+  };
+
+  // DiagnosisStats를 ComprehensiveDiagnosis 형식으로 변환
+  const convertDiagnosisStats = (diagnosisStats: any) => {
+    const userScores = diagnosisStats.userScores || {};
+    const overallScore = Object.values(userScores).length > 0 
+      ? Math.round(Object.values(userScores).reduce((a: number, b: number) => a + b, 0) / Object.values(userScores).length)
+      : 75;
+    
+    return {
+      id: 'diagnosis_' + Date.now(),
+      userId: reportId || 'user_123',
+      overallScore: overallScore,
+      categoryScores: userScores,
+      buildingComparison: {
+        averageScore: diagnosisStats.buildingAverageScores ? 
+          Math.round(Object.values(diagnosisStats.buildingAverageScores).reduce((a: number, b: number) => a + b, 0) / Object.values(diagnosisStats.buildingAverageScores).length) : 75,
+        participantCount: diagnosisStats.buildingParticipantCount || 0,
+        rank: 1,
+        percentile: 75
+      },
+      neighborhoodComparison: {
+        averageScore: diagnosisStats.neighborhoodAverageScores ? 
+          Math.round(Object.values(diagnosisStats.neighborhoodAverageScores).reduce((a: number, b: number) => a + b, 0) / Object.values(diagnosisStats.neighborhoodAverageScores).length) : 72,
+        participantCount: diagnosisStats.neighborhoodParticipantCount || 0,
+        rank: 1,
+        percentile: 82
+      },
+      recommendations: [],
+      createdAt: new Date().toISOString()
+    };
+  };
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600 bg-green-100';
@@ -107,6 +168,23 @@ export default function ReportView() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
           <p className="text-gray-600">리포트를 불러오는 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">리포트 로딩 실패</h1>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+          >
+            다시 시도
+          </button>
         </div>
       </div>
     );

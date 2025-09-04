@@ -229,6 +229,7 @@ export interface NegotiationReport {
   id: string;
   userId: string;
   reportUrl: string;
+  shareToken?: string;
   title: string;
   summary: string;
   keyFindings: string[];
@@ -237,4 +238,49 @@ export interface NegotiationReport {
   diagnosisData: ComprehensiveDiagnosis;
   createdAt: string;
   isShared: boolean;
+}
+
+// 백엔드 AdvancedReport와 매칭되는 타입
+export interface AdvancedReport {
+  userProfile: User;
+  marketData: MarketData;
+  diagnosisStats: DiagnosisStats;
+  negotiationStrategies: NegotiationTip[];
+  dataReliability: DataReliability;
+  keyFindings: string[];
+  recommendations: string[];
+}
+
+export interface NegotiationTip {
+  category: string;
+  message: string;
+  priority: number;
+}
+
+export interface DataReliability {
+  buildingParticipantCount: number;
+  neighborhoodParticipantCount: number;
+  buildingReliabilityScore: number;
+  neighborhoodReliabilityScore: number;
+  isReportEligible: boolean;
+  reliabilityMessage: string;
+  categoryParticipantCounts?: { [key: string]: number };
+}
+
+export interface NegotiationCard {
+  issueId: string;
+  issueName: string;
+  category: IssueCategory;
+  description: string;
+  negotiationStrategy: string;
+  priority: number;
+  scoreDifference: number;
+  legalBasis: string;
+  suggestedAction: string;
+}
+
+export enum IssueCategory {
+  LEGAL_REPAIR = 'LEGAL_REPAIR',
+  STRUCTURAL = 'STRUCTURAL',
+  GENERAL = 'GENERAL'
 }

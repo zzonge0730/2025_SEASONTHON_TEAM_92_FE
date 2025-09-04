@@ -44,6 +44,18 @@ export const reportApi = {
     const response = await api.get(`/api/reports/advanced/${userId}`);
     return response.data;
   },
+  getNegotiationCards: async (userId: string): Promise<ApiResponse<any[]>> => {
+    const response = await api.get(`/api/reports/negotiation-cards/${userId}`);
+    return response.data;
+  },
+  getNegotiationScenario: async (userId: string): Promise<ApiResponse<string>> => {
+    const response = await api.get(`/api/reports/negotiation-scenario/${userId}`);
+    return response.data;
+  },
+  getNegotiationSuccessRate: async (userId: string): Promise<ApiResponse<number>> => {
+    const response = await api.get(`/api/reports/success-rate/${userId}`);
+    return response.data;
+  },
 };
 
 export const groupApi = {
