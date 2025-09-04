@@ -140,7 +140,7 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answers, setAnswers] = useState<DiagnosisFormData>({});
 
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<DiagnosisFormData>();
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<DiagnosisFormData>();
 
   const currentQuestion = DIAGNOSIS_QUESTIONS[currentStep];
   const progress = ((currentStep + 1) / DIAGNOSIS_QUESTIONS.length) * 100;
@@ -225,8 +225,8 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
     const scoreMap: { [key: string]: number } = {
       '전혀 안 들림': 4, '매우 충분함': 4, '매우 일정함': 4, '매우 안전함': 4, '매우 잘 됨': 4, '매우 합리적': 4,
       '가끔 들림': 3, '충분함': 3, '대체로 일정함': 3, '안전함': 3, '잘 됨': 3, '합리적': 3,
-      '자주 들림': 2, '부족함': 2, '가끔 변함': 2, '불안함': 2, '부족함': 2, '비쌈': 2,
-      '매우 자주 들림': 1, '매우 부족함': 1, '자주 변함': 1, '매우 불안함': 1, '매우 부족함': 1, '매우 비쌈': 1,
+      '자주 들림': 2, '부족함': 2, '가끔 변함': 2, '불안함': 2, '비쌈': 2,
+      '매우 자주 들림': 1, '매우 부족함': 1, '자주 변함': 1, '매우 불안함': 1, '매우 비쌈': 1,
       '없음': 4, '1-2번': 3, '3-5번': 2, '매우 자주': 1, '가끔 고장': 2, '자주 고장': 1
     };
     return scoreMap[answer] || 2;

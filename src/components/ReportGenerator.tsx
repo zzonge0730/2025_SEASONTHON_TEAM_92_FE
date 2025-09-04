@@ -36,7 +36,7 @@ export default function ReportGenerator({
       const reportUrl = `${window.location.origin}/report/${reportId}`;
 
       // 키 포인트 자동 생성
-      const keyFindings = generateKeyFindings(diagnosisData, marketData);
+      const keyFindings = generateKeyFindings(diagnosisData);
       
       // 추천사항 자동 생성
       const recommendations = generateRecommendations(diagnosisData, marketData);
@@ -66,7 +66,7 @@ export default function ReportGenerator({
     }
   };
 
-  const generateKeyFindings = (diagnosis: ComprehensiveDiagnosis, market: MarketData): string[] => {
+  const generateKeyFindings = (diagnosis: ComprehensiveDiagnosis): string[] => {
     const findings: string[] = [];
 
     // 진단 점수 기반 포인트

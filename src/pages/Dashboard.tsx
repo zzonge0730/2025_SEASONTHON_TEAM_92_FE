@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Group, ComprehensiveDiagnosis, MarketData, NegotiationReport } from '../types';
+import { User, Group, ComprehensiveDiagnosis, NegotiationReport } from '../types';
 import { groupApi } from '../lib/api';
 import { formatCurrency } from '../utils/formatting';
 import DiagnosisSystem from '../components/DiagnosisSystem';
@@ -23,11 +23,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
   });
 
   // 새로운 상태들
-  const [showDiagnosis, setShowDiagnosis] = useState(false);
-  const [showWeeklyMission, setShowWeeklyMission] = useState(false);
-  const [showReportGenerator, setShowReportGenerator] = useState(false);
   const [diagnosisResult, setDiagnosisResult] = useState<ComprehensiveDiagnosis | null>(null);
-  const [generatedReport, setGeneratedReport] = useState<NegotiationReport | null>(null);
   const [currentView, setCurrentView] = useState<'dashboard' | 'diagnosis' | 'mission' | 'report'>('dashboard');
 
   useEffect(() => {
@@ -89,13 +85,12 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     setCurrentView('diagnosis');
   };
 
-  const handleMissionComplete = (participation: any) => {
+  const handleMissionComplete = () => {
     setCurrentView('dashboard');
     // 미션 완료 후 대시보드로 돌아가기
   };
 
-  const handleReportGenerated = (report: NegotiationReport) => {
-    setGeneratedReport(report);
+  const handleReportGenerated = () => {
     setCurrentView('report');
   };
 

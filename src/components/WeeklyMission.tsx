@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { WeeklyMission, MissionParticipation, DiagnosisQuestion, User } from '../types';
+import type { WeeklyMission, MissionParticipation, User } from '../types';
 
 interface WeeklyMissionProps {
   currentUser: User;
