@@ -11,7 +11,7 @@ interface LandlordDashboardProps {
 export default function LandlordDashboard({ currentUser, onLogout }: LandlordDashboardProps) {
   const [properties, setProperties] = useState<LandlordProperty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddProperty] = useState(false);
+  const [showAddProperty, setShowAddProperty] = useState(false);
 
   useEffect(() => {
     fetchProperties();
