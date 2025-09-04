@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { User, LandlordProperty } from '../types';
 import { landlordApi } from '../lib/api';
 import { formatCurrency } from '../utils/formatting';
@@ -11,7 +11,7 @@ interface LandlordDashboardProps {
 export default function LandlordDashboard({ currentUser, onLogout }: LandlordDashboardProps) {
   const [properties, setProperties] = useState<LandlordProperty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddProperty, setShowAddProperty] = useState(false);
+  const [showAddProperty] = useState(false);
 
   useEffect(() => {
     fetchProperties();

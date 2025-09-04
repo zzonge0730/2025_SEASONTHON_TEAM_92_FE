@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Group, AnonymousReport } from '../types';
+import { User, Group } from '../types';
 import { groupApi } from '../lib/api';
 import { formatCurrency } from '../utils/formatting';
 

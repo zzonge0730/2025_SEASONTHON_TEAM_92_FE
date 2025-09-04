@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Notification } from '../types';
 import { notificationApi } from '../lib/api';
 import { formatDateTime } from '../utils/formatting';

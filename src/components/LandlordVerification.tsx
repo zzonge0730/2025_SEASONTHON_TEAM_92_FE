@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { LandlordVerification as LandlordVerificationType, User } from '../types';
@@ -22,8 +22,7 @@ export default function LandlordVerification({ currentUser, onVerificationComple
   const {
     register,
     handleSubmit,
-    formState: { errors },
-    watch
+    formState: { errors }
   } = useForm<VerificationFormData>();
 
   const onSubmit = async (data: VerificationFormData) => {
