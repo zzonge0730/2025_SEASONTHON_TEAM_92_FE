@@ -46,7 +46,7 @@ export default function ReportGenerator({
         userId: currentUser.id || '',
         reportUrl,
         title: data.title || `${currentUser.nickname}님의 거주 환경 분석 리포트`,
-        summary: data.summary || generateSummary(diagnosisData, marketData),
+        summary: data.summary || generateSummary(diagnosisData),
         keyFindings,
         recommendations,
         marketData,
@@ -114,7 +114,7 @@ export default function ReportGenerator({
     return recommendations;
   };
 
-  const generateSummary = (diagnosis: ComprehensiveDiagnosis, market: MarketData): string => {
+  const generateSummary = (diagnosis: ComprehensiveDiagnosis): string => {
     return `이 리포트는 ${currentUser.nickname}님의 거주 환경을 종합적으로 분석한 결과입니다. 
     전체 점수 ${diagnosis.overallScore}점으로, 같은 건물 내 ${diagnosis.buildingComparison.percentile}% 상위에 위치하고 있습니다. 
     동네 평균과 비교하여 객관적인 협상 근거를 제시합니다.`;
