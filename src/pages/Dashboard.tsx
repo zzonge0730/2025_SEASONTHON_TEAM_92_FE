@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Group, ComprehensiveDiagnosis, NegotiationReport } from '../types';
+import { User, Group, ComprehensiveDiagnosis } from '../types';
 import { groupApi } from '../lib/api';
 import { formatCurrency } from '../utils/formatting';
 import DiagnosisSystem from '../components/DiagnosisSystem';

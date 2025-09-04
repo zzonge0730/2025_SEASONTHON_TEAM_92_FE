@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { DiagnosisQuestion, DiagnosisResult, ComprehensiveDiagnosis, User } from '../types';
+import { DiagnosisQuestion, ComprehensiveDiagnosis, User } from '../types';
 
 interface DiagnosisSystemProps {
   currentUser: User;

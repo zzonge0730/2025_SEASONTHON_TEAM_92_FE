@@ -26,7 +26,7 @@ export default function ReportGenerator({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<NegotiationReport | null>(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<ReportFormData>();
+  const { register, handleSubmit } = useForm<ReportFormData>();
 
   const generateReport = async (data: ReportFormData) => {
     setIsGenerating(true);
@@ -95,10 +95,7 @@ export default function ReportGenerator({
       }
     });
 
-    // 시장 데이터 기반 포인트
-    if (market.avgMonthlyRent > 0) {
-      findings.push(`동네 평균 월세는 ${market.avgMonthlyRent.toLocaleString()}원입니다.`);
-    }
+    // 시장 데이터 기반 포인트는 generateRecommendations에서 처리
 
     return findings;
   };
@@ -110,9 +107,7 @@ export default function ReportGenerator({
     recommendations.push(...diagnosis.recommendations);
 
     // 시장 데이터 기반 추천
-    if (market.avgMonthlyRent > 0) {
-      recommendations.push('동네 평균 시세를 참고하여 합리적인 협상을 진행하세요.');
-    }
+    recommendations.push('동네 평균 시세를 참고하여 합리적인 협상을 진행하세요.');
 
     recommendations.push('데이터 기반의 객관적 근거를 제시하여 협상력을 높이세요.');
 
