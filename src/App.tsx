@@ -8,6 +8,7 @@ import NotificationsPage from './pages/NotificationsPage';
 import ReportView from './pages/ReportView';
 import SharedReportView from './pages/SharedReportView';
 import AuthForm from './components/AuthForm';
+import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
 import AnonymousReport from './components/AnonymousReport';
 import NegotiationGuide from './components/NegotiationGuide';
@@ -20,6 +21,7 @@ import { User } from './types';
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser');
@@ -41,10 +43,23 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setShowAdminLogin(false);
     localStorage.removeItem('currentUser');
   };
 
-  // ... other handlers
+  const handleAdminLogin = () => {
+    setShowAdminLogin(true);
+  };
+
+  const handleAdminAuthSuccess = (admin: User) => {
+    setCurrentUser(admin);
+    setShowAdminLogin(false);
+    localStorage.setItem('currentUser', JSON.stringify(admin));
+  };
+
+  const handleBackToMain = () => {
+    setShowAdminLogin(false);
+  };
 
   const AppContent = () => {
     if (isLoading) {
@@ -52,8 +67,15 @@ function App() {
     }
 
     if (!currentUser) {
-      // ... Login/Register Forms
-      return <AuthForm onAuthSuccess={handleAuthSuccess} />;
+      if (showAdminLogin) {
+        return (
+          <AdminLogin
+            onAdminLogin={handleAdminAuthSuccess}
+            onBack={handleBackToMain}
+          />
+        );
+      }
+      return <AuthForm onAuthSuccess={handleAuthSuccess} onAdminLogin={handleAdminLogin} />;
     }
 
     // After login, check if location is verified

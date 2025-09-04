@@ -22,8 +22,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAdminLogin, onBack }) => {
     setIsLoading(true);
     try {
       // 관리자 인증 (실제로는 서버에서 처리)
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8891/api';
-      const url = baseUrl.endsWith('/api') ? `${baseUrl}/admin/login` : `${baseUrl}/api/admin/login`;
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8891';
+      const url = `${baseUrl}/api/admin/login`;
       const response = await fetch(url, {
         method: 'POST',
         headers: {
