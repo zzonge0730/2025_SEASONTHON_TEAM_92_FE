@@ -79,7 +79,9 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
             longitude: location.longitude
           };
 
-      const response = await axios.post(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, payload);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8891/api';
+      const url = baseUrl.endsWith('/api') ? `${baseUrl}${endpoint}` : `${baseUrl}/api${endpoint}`;
+      const response = await axios.post(url, payload);
       const result = response.data;
 
       if (result.ok) {
