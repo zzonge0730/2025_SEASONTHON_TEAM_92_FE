@@ -30,30 +30,30 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
           <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
             {group.scope}
           </span>
-          <span>{group.groupSize} households</span>
+          <span>{group.groupSize} 가구</span>
         </div>
       </div>
 
-      {/* Tenant Data */}
+      {/* 세입자 데이터 */}
       <div className="space-y-3 mb-4">
-        <h4 className="text-sm font-medium text-gray-700 border-b pb-1">Tenant Data</h4>
+        <h4 className="text-sm font-medium text-gray-700 border-b pb-1">세입자 데이터</h4>
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Average Rent:</span>
+          <span className="text-sm text-gray-600">평균 월세:</span>
           <span className="font-medium text-gray-900">
-            {formatCurrency(group.avgRentKrw)} KRW
+            {formatCurrency(group.avgRentKrw)}원
           </span>
         </div>
         
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-600">Median Rent:</span>
+          <span className="text-sm text-gray-600">중간값 월세:</span>
           <span className="font-medium text-gray-900">
-            {formatCurrency(group.medianRentKrw)} KRW
+            {formatCurrency(group.medianRentKrw)}원
           </span>
         </div>
         
         {group.avgNoticePct > 0 && (
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Avg Notice %:</span>
+            <span className="text-sm text-gray-600">평균 인상 통지율:</span>
             <span className="font-medium text-gray-900">
               {group.avgNoticePct.toFixed(1)}%
             </span>

@@ -1,3 +1,19 @@
+export interface User {
+  id?: string;
+  timestamp?: string;
+  email: string;
+  password?: string;
+  nickname: string;
+  role: 'tenant' | 'landlord' | 'anonymous' | 'admin';
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  neighborhood?: string;
+  buildingName?: string;
+  profileCompleted?: boolean;
+  active?: boolean;
+}
+
 export interface Tenant {
   id?: string;
   timestamp?: string;

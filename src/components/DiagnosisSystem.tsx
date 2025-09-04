@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { DiagnosisQuestion, ComprehensiveDiagnosis, User } from '../types';
+import { diagnosisApi } from '../lib/api';
 
 interface DiagnosisSystemProps {
   currentUser: User;
@@ -152,19 +153,34 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
       const categoryScores = calculateCategoryScores(data);
       const overallScore = calculateOverallScore(categoryScores);
 
-      // 비교 데이터 생성 (실제로는 API에서 가져와야 함)
+      // 실제 API에서 비교 데이터 가져오기
+      const diagnosisResponses = Object.entries(data).map(([questionId, answer]) => ({
+        questionId,
+        answerValue: getScoreFromAnswer(answer),
+        userId: currentUser.id || '',
+        buildingName: currentUser.buildingName || '',
+        neighborhood: currentUser.neighborhood || '',
+        timestamp: new Date().toISOString()
+      }));
+
+      // 진단 응답 제출
+      await diagnosisApi.submitBulk(diagnosisResponses);
+
+      // 비교 통계 가져오기
+      const comparisonStats = await diagnosisApi.getComparisonStats(currentUser.id || '');
+      
       const buildingComparison = {
-        averageScore: 75,
-        participantCount: 12,
-        rank: 3,
-        percentile: 75
+        averageScore: comparisonStats.ok ? comparisonStats.data?.buildingAverageScores?.overall || 75 : 75,
+        participantCount: comparisonStats.ok ? comparisonStats.data?.buildingParticipantCount || 12 : 12,
+        rank: 3, // TODO: 실제 순위 계산 로직 구현
+        percentile: 75 // TODO: 실제 백분위 계산 로직 구현
       };
 
       const neighborhoodComparison = {
-        averageScore: 72,
-        participantCount: 45,
-        rank: 8,
-        percentile: 82
+        averageScore: comparisonStats.ok ? comparisonStats.data?.neighborhoodAverageScores?.overall || 72 : 72,
+        participantCount: comparisonStats.ok ? comparisonStats.data?.neighborhoodParticipantCount || 45 : 45,
+        rank: 8, // TODO: 실제 순위 계산 로직 구현
+        percentile: 82 // TODO: 실제 백분위 계산 로직 구현
       };
 
       // 추천사항 생성
