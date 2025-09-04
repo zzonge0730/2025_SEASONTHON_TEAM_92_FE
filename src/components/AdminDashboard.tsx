@@ -30,10 +30,13 @@ interface AdminDashboardProps {
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin, onLogout }) => {
   const [reports, setReports] = useState<AnonymousReport[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
-  const [activeTab, setActiveTab] = useState<'reports' | 'votes'>('reports');
+  const [infoCards, setInfoCards] = useState<InfoCard[]>([]);
+  const [activeTab, setActiveTab] = useState<'reports' | 'votes' | 'content'>('reports');
   const [isLoading, setIsLoading] = useState(false);
   const [selectedVoteForResults, setSelectedVoteForResults] = useState<Vote | null>(null);
   const [voteResults, setVoteResults] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState<InfoCard | null>(null);
 
   // 익명 신고 목록 조회
   const fetchReports = async () => {
@@ -429,6 +432,46 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin, onLogout }) => {
                   <div className="space-y-3">
                     <h4 className="font-medium text-gray-900">투표 결과</h4>
                     {Object.entries(voteResults.results).map(([option, count]) => (
+                      <div key={option} className="border rounded-lg p-3">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-medium text-gray-900">{option}</span>
+                          <span className="text-sm text-gray-600">
+                            {count}표 ({voteResults.percentages[option]}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                            style={{ width: `${voteResults.percentages[option]}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              )}
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeResultsModal}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default AdminDashboard;entries(voteResults.results).map(([option, count]) => (
                       <div key={option} className="border rounded-lg p-3">
                         <div className="flex justify-between items-center mb-2">
                           <span className="font-medium text-gray-900">{option}</span>

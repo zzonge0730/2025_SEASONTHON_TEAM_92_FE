@@ -113,3 +113,40 @@ export const notificationApi = {
     return response.data;
   },
 };
+
+export const diagnosisApi = {
+  submitBulk: async (responses: any[]): Promise<ApiResponse<string>> => {
+    const response = await api.post('/diagnoses/bulk', responses);
+    return response.data;
+  },
+  getComparisonStats: async (userId: string): Promise<ApiResponse<any>> => {
+    const response = await api.get(`/diagnoses/comparison/${userId}`);
+    return response.data;
+  },
+};
+
+export const reportApi = {
+  getAdvancedReport: async (userId: string): Promise<ApiResponse<any>> => {
+    const response = await api.get(`/reports/advanced/${userId}`);
+    return response.data;
+  },
+};
+
+export const infoCardApi = {
+  getAllCards: async (): Promise<ApiResponse<any[]>> => {
+    const response = await api.get('/info-cards');
+    return response.data;
+  },
+  createCard: async (cardData: any): Promise<ApiResponse<any>> => {
+    const response = await api.post('/admin/info-cards', cardData);
+    return response.data;
+  },
+  updateCard: async (id: string, cardData: any): Promise<ApiResponse<any>> => {
+    const response = await api.put(`/admin/info-cards/${id}`, cardData);
+    return response.data;
+  },
+  deleteCard: async (id: string): Promise<ApiResponse<string>> => {
+    const response = await api.delete(`/admin/info-cards/${id}`);
+    return response.data;
+  },
+};
