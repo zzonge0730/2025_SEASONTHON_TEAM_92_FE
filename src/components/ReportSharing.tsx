@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { NegotiationReport } from '../types';
 import toast from 'react-hot-toast';
 

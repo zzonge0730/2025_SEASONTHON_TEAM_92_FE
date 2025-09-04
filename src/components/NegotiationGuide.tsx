@@ -173,7 +173,7 @@ const NegotiationGuide: React.FC<NegotiationGuideProps> = ({ userId = 'user_123'
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {negotiationCards
                 .sort((a, b) => a.priority - b.priority)
-                .map((card, index) => (
+                .map((card) => (
                   <div key={card.issueId} className={`border rounded-lg p-4 ${getCategoryColor(card.category)}`}>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-medium">{card.issueName}</h3>

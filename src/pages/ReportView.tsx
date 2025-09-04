@@ -108,9 +108,13 @@ export default function ReportView() {
   // DiagnosisStats를 ComprehensiveDiagnosis 형식으로 변환
   const convertDiagnosisStats = (diagnosisStats: any) => {
     const userScores = diagnosisStats.userScores || {};
-    const overallScore = Object.values(userScores).length > 0 
-      ? Math.round(Object.values(userScores).reduce((a: number, b: number) => a + b, 0) / Object.values(userScores).length)
+    const userScoreValues = Object.values(userScores) as number[];
+    const overallScore = userScoreValues.length > 0 
+      ? Math.round(userScoreValues.reduce((a: number, b: number) => a + b, 0) / userScoreValues.length)
       : 75;
+    
+    const buildingScores = diagnosisStats.buildingAverageScores ? Object.values(diagnosisStats.buildingAverageScores) as number[] : [];
+    const neighborhoodScores = diagnosisStats.neighborhoodAverageScores ? Object.values(diagnosisStats.neighborhoodAverageScores) as number[] : [];
     
     return {
       id: 'diagnosis_' + Date.now(),
@@ -118,15 +122,15 @@ export default function ReportView() {
       overallScore: overallScore,
       categoryScores: userScores,
       buildingComparison: {
-        averageScore: diagnosisStats.buildingAverageScores ? 
-          Math.round(Object.values(diagnosisStats.buildingAverageScores).reduce((a: number, b: number) => a + b, 0) / Object.values(diagnosisStats.buildingAverageScores).length) : 75,
+        averageScore: buildingScores.length > 0 
+          ? Math.round(buildingScores.reduce((a: number, b: number) => a + b, 0) / buildingScores.length) : 75,
         participantCount: diagnosisStats.buildingParticipantCount || 0,
         rank: 1,
         percentile: 75
       },
       neighborhoodComparison: {
-        averageScore: diagnosisStats.neighborhoodAverageScores ? 
-          Math.round(Object.values(diagnosisStats.neighborhoodAverageScores).reduce((a: number, b: number) => a + b, 0) / Object.values(diagnosisStats.neighborhoodAverageScores).length) : 72,
+        averageScore: neighborhoodScores.length > 0 
+          ? Math.round(neighborhoodScores.reduce((a: number, b: number) => a + b, 0) / neighborhoodScores.length) : 72,
         participantCount: diagnosisStats.neighborhoodParticipantCount || 0,
         rank: 1,
         percentile: 82
