@@ -13,10 +13,7 @@ import LandlordDashboard from './components/LandlordDashboard';
 import AnonymousReport from './components/AnonymousReport';
 import NegotiationGuide from './components/NegotiationGuide';
 import TenantVoting from './components/TenantVoting';
-import NotificationBell from './components/NotificationBell';
 import HowItWorks from './components/HowItWorks';
-import DiagnosisSystem from './components/DiagnosisSystem';
-import DiagnosisResult from './components/DiagnosisResult';
 import { User } from './types';
 import { hasPermission, getRoleDisplayName } from './utils/rolePermissions';
 
@@ -123,6 +120,12 @@ function App() {
     <Router>
       <AppContent />
       <Toaster position="top-right" />
+    </Router>
+  );
+}
+
+export default App;
+top-right" />
     </Router>
   );
 }
