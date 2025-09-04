@@ -5,8 +5,11 @@ export interface Tenant {
   streetAddress: string;
   neighborhood: string;
   city: string;
+  buildingType: 'apartment' | 'officetel' | 'villa';
+  contractType: 'monthly' | 'yearly';
   currentRentKrw: number;
   depositKrw: number;
+  maintenanceFee?: number;
   leaseEndYyyyMm: string;
   increaseNoticePctOptional?: number;
   landlordEmailOptional?: string;
@@ -153,4 +156,72 @@ export interface ApiResponse<T> {
   ok: boolean;
   data: T;
   message?: string;
+}
+
+// 진단 시스템 관련 타입들
+export interface DiagnosisQuestion {
+  id: string;
+  category: 'noise' | 'water_pressure' | 'lighting' | 'parking' | 'heating' | 'security' | 'elevator' | 'facilities';
+  question: string;
+  options: string[];
+  weight: number;
+}
+
+export interface DiagnosisResult {
+  id: string;
+  userId: string;
+  category: string;
+  score: number;
+  answers: { [questionId: string]: string };
+  createdAt: string;
+}
+
+export interface ComprehensiveDiagnosis {
+  id: string;
+  userId: string;
+  overallScore: number;
+  categoryScores: { [category: string]: number };
+  buildingComparison: ComparisonData;
+  neighborhoodComparison: ComparisonData;
+  recommendations: string[];
+  createdAt: string;
+}
+
+export interface ComparisonData {
+  averageScore: number;
+  participantCount: number;
+  rank: number;
+  percentile: number;
+}
+
+export interface WeeklyMission {
+  id: string;
+  title: string;
+  description: string;
+  questions: DiagnosisQuestion[];
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+}
+
+export interface MissionParticipation {
+  id: string;
+  userId: string;
+  missionId: string;
+  answers: { [questionId: string]: string };
+  completedAt: string;
+}
+
+export interface NegotiationReport {
+  id: string;
+  userId: string;
+  reportUrl: string;
+  title: string;
+  summary: string;
+  keyFindings: string[];
+  recommendations: string[];
+  marketData: MarketData;
+  diagnosisData: ComprehensiveDiagnosis;
+  createdAt: string;
+  isShared: boolean;
 }

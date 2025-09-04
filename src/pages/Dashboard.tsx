@@ -1,8 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, Group } from '../types';
+import { User, Group, ComprehensiveDiagnosis, MarketData, NegotiationReport } from '../types';
 import { groupApi } from '../lib/api';
 import { formatCurrency } from '../utils/formatting';
+import DiagnosisSystem from '../components/DiagnosisSystem';
+import DiagnosisResult from '../components/DiagnosisResult';
+import WeeklyMission from '../components/WeeklyMission';
+import ReportGenerator from '../components/ReportGenerator';
 
 interface DashboardProps {
   currentUser: User;
@@ -17,6 +21,14 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     totalRent: 0,
     avgRent: 0
   });
+
+  // 새로운 상태들
+  const [showDiagnosis, setShowDiagnosis] = useState(false);
+  const [showWeeklyMission, setShowWeeklyMission] = useState(false);
+  const [showReportGenerator, setShowReportGenerator] = useState(false);
+  const [diagnosisResult, setDiagnosisResult] = useState<ComprehensiveDiagnosis | null>(null);
+  const [generatedReport, setGeneratedReport] = useState<NegotiationReport | null>(null);
+  const [currentView, setCurrentView] = useState<'dashboard' | 'diagnosis' | 'mission' | 'report'>('dashboard');
 
   useEffect(() => {
     fetchUserData();
@@ -71,6 +83,106 @@ export default function Dashboard({ currentUser }: DashboardProps) {
     );
   }
 
+  // 핸들러 함수들
+  const handleDiagnosisComplete = (result: ComprehensiveDiagnosis) => {
+    setDiagnosisResult(result);
+    setCurrentView('diagnosis');
+  };
+
+  const handleMissionComplete = (participation: any) => {
+    setCurrentView('dashboard');
+    // 미션 완료 후 대시보드로 돌아가기
+  };
+
+  const handleReportGenerated = (report: NegotiationReport) => {
+    setGeneratedReport(report);
+    setCurrentView('report');
+  };
+
+  const handleGenerateReport = () => {
+    if (diagnosisResult) {
+      setCurrentView('report');
+    }
+  };
+
+  // 뷰별 렌더링
+  if (currentView === 'diagnosis') {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-6">
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className="text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            ← 대시보드로 돌아가기
+          </button>
+        </div>
+        {diagnosisResult ? (
+          <DiagnosisResult 
+            result={diagnosisResult} 
+            onGenerateReport={handleGenerateReport}
+          />
+        ) : (
+          <DiagnosisSystem 
+            currentUser={currentUser} 
+            onComplete={handleDiagnosisComplete}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (currentView === 'mission') {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-6">
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className="text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            ← 대시보드로 돌아가기
+          </button>
+        </div>
+        <WeeklyMission 
+          currentUser={currentUser} 
+          onComplete={handleMissionComplete}
+        />
+      </div>
+    );
+  }
+
+  if (currentView === 'report') {
+    return (
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-6">
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className="text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            ← 대시보드로 돌아가기
+          </button>
+        </div>
+        {diagnosisResult && (
+          <ReportGenerator
+            currentUser={currentUser}
+            diagnosisData={diagnosisResult}
+            marketData={groups[0]?.marketData || {
+              neighborhood: '성남동',
+              buildingName: '행복아파트',
+              avgDeposit: 5000000,
+              avgMonthlyRent: 500000,
+              medianDeposit: 4500000,
+              medianMonthlyRent: 480000,
+              transactionCount: 12,
+              recentTransactionDate: '2024-01-15'
+            }}
+            onReportGenerated={handleReportGenerated}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Welcome Section */}
@@ -82,6 +194,64 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           {getRoleDisplayName(currentUser.role)}으로 활동하고 계시는군요. 
           오늘도 공동 협상을 통해 더 나은 임대 조건을 만들어보세요.
         </p>
+      </div>
+
+      {/* 새로운 기능 카드들 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+              <span className="text-2xl">🏠</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">우리 집 진단</h3>
+              <p className="text-sm text-gray-600">거주 환경 종합 분석</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCurrentView('diagnosis')}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+          >
+            진단 시작하기
+          </button>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+              <span className="text-2xl">📅</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">주간 미션</h3>
+              <p className="text-sm text-gray-600">이번 주 주제: 방음 상태</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCurrentView('mission')}
+            className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+          >
+            미션 참여하기
+          </button>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+              <span className="text-2xl">📊</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">협상 리포트</h3>
+              <p className="text-sm text-gray-600">데이터 기반 협상 자료</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setCurrentView('report')}
+            disabled={!diagnosisResult}
+            className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {diagnosisResult ? '리포트 생성하기' : '진단 완료 후 이용 가능'}
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}

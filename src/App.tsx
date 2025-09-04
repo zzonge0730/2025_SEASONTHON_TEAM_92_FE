@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import TenantForm from './pages/TenantForm';
 import GroupsPage from './pages/GroupsPage';
 import NotificationsPage from './pages/NotificationsPage';
+import ReportView from './pages/ReportView';
 import AuthForm from './components/AuthForm';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
@@ -301,6 +302,7 @@ function App() {
             <Route path="/guide" element={<NegotiationGuide />} />
             <Route path="/voting" element={<TenantVoting currentUser={currentUser} />} />
             <Route path="/notifications" element={<NotificationsPage currentUser={currentUser} />} />
+            <Route path="/report/:reportId" element={<ReportView />} />
           </Routes>
         </main>
 

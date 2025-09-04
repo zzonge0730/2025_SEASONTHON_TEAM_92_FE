@@ -120,6 +120,43 @@ export default function TenantForm({ currentUser }: TenantFormProps) {
                 )}
               </div>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  건물 유형 *
+                </label>
+                <select
+                  {...register('buildingType', { required: '건물 유형을 선택해주세요' })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">건물 유형을 선택하세요</option>
+                  <option value="apartment">아파트</option>
+                  <option value="officetel">오피스텔</option>
+                  <option value="villa">빌라</option>
+                </select>
+                {errors.buildingType && (
+                  <p className="mt-1 text-sm text-red-600">{errors.buildingType.message}</p>
+                )}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  계약 유형 *
+                </label>
+                <select
+                  {...register('contractType', { required: '계약 유형을 선택해주세요' })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">계약 유형을 선택하세요</option>
+                  <option value="monthly">월세</option>
+                  <option value="yearly">전세</option>
+                </select>
+                {errors.contractType && (
+                  <p className="mt-1 text-sm text-red-600">{errors.contractType.message}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* 월세 정보 */}
@@ -162,6 +199,23 @@ export default function TenantForm({ currentUser }: TenantFormProps) {
                   <p className="mt-1 text-sm text-red-600">{errors.depositKrw.message}</p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                관리비 (원) - 선택사항
+              </label>
+              <input
+                type="number"
+                {...register('maintenanceFee', { 
+                  min: { value: 0, message: '관리비는 0 이상이어야 합니다' }
+                })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                placeholder="100000"
+              />
+              {errors.maintenanceFee && (
+                <p className="mt-1 text-sm text-red-600">{errors.maintenanceFee.message}</p>
+              )}
             </div>
 
             <div>
