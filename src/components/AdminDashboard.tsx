@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { User, Vote } from '../types';
 
@@ -47,7 +47,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
     }
   };
 
-  const handleVerifyReport = async (reportId: string) => {
+  const handleVerifyReport = async () => {
     try {
       // 실제로는 API 호출
       toast.success('신고가 검증되었습니다.');
@@ -207,7 +207,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
                       </div>
                       <div className="ml-4 flex space-x-2">
                         <button
-                          onClick={() => handleVerifyReport(report.id)}
+                          onClick={handleVerifyReport}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                         >
                           검증
@@ -244,13 +244,10 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
                 {votes.map((vote) => (
                   <div key={vote.id} className="border rounded-lg p-4">
                     <h4 className="text-sm font-medium text-gray-900">
-                      {vote.title}
+                      투표 ID: {vote.id}
                     </h4>
                     <p className="text-sm text-gray-600">
-                      {vote.description}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      참여자: {vote.participantCount}명
+                      투표가 생성되었습니다.
                     </p>
                   </div>
                 ))}
