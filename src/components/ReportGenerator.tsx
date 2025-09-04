@@ -39,7 +39,7 @@ export default function ReportGenerator({
       const keyFindings = generateKeyFindings(diagnosisData);
       
       // 추천사항 자동 생성
-      const recommendations = generateRecommendations(diagnosisData, marketData);
+      const recommendations = generateRecommendations(diagnosisData);
 
       const report: NegotiationReport = {
         id: reportId,
