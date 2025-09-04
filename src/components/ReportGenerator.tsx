@@ -100,7 +100,7 @@ export default function ReportGenerator({
     return findings;
   };
 
-  const generateRecommendations = (diagnosis: ComprehensiveDiagnosis, market: MarketData): string[] => {
+  const generateRecommendations = (diagnosis: ComprehensiveDiagnosis): string[] => {
     const recommendations: string[] = [];
 
     // 진단 기반 추천
