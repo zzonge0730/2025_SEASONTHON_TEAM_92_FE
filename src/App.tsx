@@ -78,6 +78,11 @@ function App() {
       return <AuthForm onAuthSuccess={handleAuthSuccess} onAdminLogin={handleAdminLogin} />;
     }
 
+    // 관리자는 온보딩 스킵
+    if (currentUser.role === 'admin') {
+        return <AdminDashboard admin={currentUser} onLogout={handleLogout} />;
+    }
+
     // After login, check if location is verified
     if (!currentUser.address || !currentUser.buildingName) {
         return <LocationVerifier currentUser={currentUser} onVerificationSuccess={handleAuthSuccess} />;
@@ -88,9 +93,6 @@ function App() {
         return <TenantForm currentUser={currentUser} onComplete={handleAuthSuccess} />;
     }
 
-    if (currentUser.role === 'admin') {
-      return <AdminDashboard admin={currentUser} onLogout={handleLogout} />;
-    }
 
     // ... other roles and main app layout
     return (
