@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { User, InfoCard, Vote } from '../types';
-import { infoCardApi } from '../lib/api';
-import InfoCardModal from './InfoCardModal';
+import { User, Vote } from '../types';
 
 interface AnonymousReport {
   id: string;
