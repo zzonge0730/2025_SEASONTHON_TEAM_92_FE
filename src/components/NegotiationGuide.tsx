@@ -62,18 +62,6 @@ const NegotiationGuide: React.FC<NegotiationGuideProps> = ({ userId = 'user_123'
     }
   };
 
-  const getCategoryLabel = (category: IssueCategory) => {
-    switch (category) {
-      case IssueCategory.LEGAL_REPAIR:
-        return '법적 수선 의무';
-      case IssueCategory.STRUCTURAL:
-        return '구조적 문제';
-      case IssueCategory.GENERAL:
-        return '일반적 문제';
-      default:
-        return '기타';
-    }
-  };
 
   const getPriorityLabel = (priority: number) => {
     switch (priority) {
