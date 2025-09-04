@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Tenant, Group, LetterRequest, LetterResponse, ApiResponse } from '../types';
+import { Tenant, Group, LetterRequest, LetterResponse, ApiResponse, ProposalDiscussion, LandlordVerification, LandlordProperty, Notification } from '../types';
 
 // ngrok URL 자동 감지
 const getApiBaseUrl = () => {
@@ -46,11 +46,70 @@ export const groupApi = {
     });
     return response.data;
   },
+  
+  getGroupPainPoints: async (groupId: string): Promise<ApiResponse<string[]>> => {
+    const response = await api.get(`/groups/${groupId}/pain-points`);
+    return response.data;
+  },
+  
+  getGroupDiscussions: async (groupId: string): Promise<ApiResponse<ProposalDiscussion[]>> => {
+    const response = await api.get(`/groups/${groupId}/discussions`);
+    return response.data;
+  },
 };
 
 export const letterApi = {
   generateLetter: async (request: LetterRequest): Promise<ApiResponse<LetterResponse>> => {
     const response = await api.post('/letters', request);
+    return response.data;
+  },
+};
+
+export const landlordApi = {
+  submitVerification: async (verification: LandlordVerification): Promise<ApiResponse<LandlordVerification>> => {
+    const response = await api.post('/landlords/verification', verification);
+    return response.data;
+  },
+  
+  getVerificationStatus: async (userId: string): Promise<ApiResponse<LandlordVerification>> => {
+    const response = await api.get(`/landlords/verification/${userId}`);
+    return response.data;
+  },
+  
+  getProperties: async (landlordId: string): Promise<ApiResponse<LandlordProperty[]>> => {
+    const response = await api.get(`/landlords/${landlordId}/properties`);
+    return response.data;
+  },
+  
+  addProperty: async (property: LandlordProperty): Promise<ApiResponse<LandlordProperty>> => {
+    const response = await api.post('/landlords/properties', property);
+    return response.data;
+  },
+  
+  getProposalsForProperty: async (propertyId: string): Promise<ApiResponse<any[]>> => {
+    const response = await api.get(`/landlords/properties/${propertyId}/proposals`);
+    return response.data;
+  },
+};
+
+export const notificationApi = {
+  getNotifications: async (userId: string): Promise<ApiResponse<Notification[]>> => {
+    const response = await api.get(`/notifications/${userId}`);
+    return response.data;
+  },
+  
+  markAsRead: async (notificationId: string): Promise<ApiResponse<void>> => {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+  
+  markAllAsRead: async (userId: string): Promise<ApiResponse<void>> => {
+    const response = await api.patch(`/notifications/${userId}/read-all`);
+    return response.data;
+  },
+  
+  getUnreadCount: async (userId: string): Promise<ApiResponse<number>> => {
+    const response = await api.get(`/notifications/${userId}/unread-count`);
     return response.data;
   },
 };

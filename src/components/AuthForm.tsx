@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { User } from '../types';
 import axios from 'axios';
 import { getDistrictFromCoordinates, DistrictInfo } from '../utils/locationUtils';
+import LandlordVerification from './LandlordVerification';
 
 interface AuthFormProps {
   onAuthSuccess: (user: User) => void;
@@ -24,6 +25,8 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
   const [location, setLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [locationError, setLocationError] = useState<string>('');
   const [districtInfo, setDistrictInfo] = useState<DistrictInfo | null>(null);
+  const [showLandlordVerification, setShowLandlordVerification] = useState(false);
+  const [pendingUser, setPendingUser] = useState<User | null>(null);
   
   const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<AuthFormData>();
 
@@ -87,12 +90,20 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
           address: result.data.address,
           latitude: location.latitude,
           longitude: location.longitude,
+          isVerified: result.data.isVerified,
         };
         
-        onAuthSuccess(user);
-        toast.success(isLogin ? '로그인 성공!' : '회원가입 성공!');
-        reset();
-        setLocation(null);
+        // 집주인이고 인증되지 않은 경우 인증 플로우로 이동
+        if (user.role === 'landlord' && !user.isVerified) {
+          setPendingUser(user);
+          setShowLandlordVerification(true);
+          toast.success('회원가입 성공! 집주인 인증을 진행해주세요.');
+        } else {
+          onAuthSuccess(user);
+          toast.success(isLogin ? '로그인 성공!' : '회원가입 성공!');
+          reset();
+          setLocation(null);
+        }
       } else {
         toast.error(result.message || '인증에 실패했습니다.');
       }
@@ -229,6 +240,36 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
           </div>
         </form>
       </div>
+      
+      {/* 집주인 인증 모달 */}
+      {showLandlordVerification && pendingUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-900">집주인 인증</h2>
+                <button
+                  onClick={() => {
+                    setShowLandlordVerification(false);
+                    setPendingUser(null);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              <LandlordVerification
+                currentUser={pendingUser}
+                onVerificationComplete={() => {
+                  setShowLandlordVerification(false);
+                  onAuthSuccess(pendingUser);
+                  setPendingUser(null);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { LetterRequest, LetterResponse, User } from '../types';
-import ProposalDiscussion from './ProposalDiscussion';
+import { LetterRequest, LetterResponse, User, ProposalDiscussion } from '../types';
+import { groupApi } from '../lib/api';
+import ProposalDiscussionComponent from './ProposalDiscussion';
 
 interface ProposalModalProps {
   isOpen: boolean;
@@ -14,17 +15,63 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ isOpen, onClose, groupId,
   const [isGenerating, setIsGenerating] = useState(false);
   const [proposal, setProposal] = useState<LetterResponse | null>(null);
   const [showDiscussion, setShowDiscussion] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(false);
+  
+  // 커스터마이징 데이터
+  const [painPoints, setPainPoints] = useState<string[]>([]);
+  const [discussions, setDiscussions] = useState<ProposalDiscussion[]>([]);
+  const [selectedPainPoints, setSelectedPainPoints] = useState<string[]>([]);
+  const [selectedDiscussions, setSelectedDiscussions] = useState<string[]>([]);
+  const [customContent, setCustomContent] = useState('');
+  const [loadingData, setLoadingData] = useState(false);
+  
+  // 제안서 설정
+  const [capPct, setCapPct] = useState(3);
+  const [termMonths, setTermMonths] = useState(24);
+  const [noticeDays, setNoticeDays] = useState(30);
+
+  // 데이터 로드
+  useEffect(() => {
+    if (isOpen && showCustomization) {
+      loadCustomizationData();
+    }
+  }, [isOpen, showCustomization, groupId]);
+
+  const loadCustomizationData = async () => {
+    setLoadingData(true);
+    try {
+      const [painPointsResponse, discussionsResponse] = await Promise.all([
+        groupApi.getGroupPainPoints(groupId),
+        groupApi.getGroupDiscussions(groupId)
+      ]);
+
+      if (painPointsResponse.ok) {
+        setPainPoints(painPointsResponse.data || []);
+      }
+      if (discussionsResponse.ok) {
+        setDiscussions(discussionsResponse.data || []);
+      }
+    } catch (error) {
+      console.error('Error loading customization data:', error);
+      toast.error('데이터를 불러오는데 실패했습니다.');
+    } finally {
+      setLoadingData(false);
+    }
+  };
 
   const generateProposal = async () => {
     setIsGenerating(true);
     try {
       const request: LetterRequest = {
         groupId,
-        capPct: 3,
-        termMonths: 24,
-        noticeDays: 30,
+        capPct,
+        termMonths,
+        noticeDays,
         contactEmail: 'team@tenantcollective.com',
-        contactPhone: '010-0000-0000'
+        contactPhone: '010-0000-0000',
+        selectedPainPoints: selectedPainPoints.length > 0 ? selectedPainPoints : undefined,
+        selectedDiscussions: selectedDiscussions.length > 0 ? selectedDiscussions : undefined,
+        customContent: customContent.trim() || undefined
       };
 
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/letters`, {
@@ -84,6 +131,60 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ isOpen, onClose, groupId,
                   같은 건물의 세입자들과 함께 작성된 제안서를 생성합니다. 
                   월세 상한제, 계약 기간, 통지 기간 등을 포함한 합리적인 제안서가 만들어집니다.
                 </p>
+                
+                {/* 기본 설정 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-blue-900 mb-1">
+                      월세 상한제 (%)
+                    </label>
+                    <input
+                      type="number"
+                      value={capPct}
+                      onChange={(e) => setCapPct(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="0"
+                      max="10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-900 mb-1">
+                      계약 기간 (개월)
+                    </label>
+                    <input
+                      type="number"
+                      value={termMonths}
+                      onChange={(e) => setTermMonths(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="12"
+                      max="60"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-blue-900 mb-1">
+                      통지 기간 (일)
+                    </label>
+                    <input
+                      type="number"
+                      value={noticeDays}
+                      onChange={(e) => setNoticeDays(Number(e.target.value))}
+                      className="w-full px-3 py-2 border border-blue-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="15"
+                      max="90"
+                    />
+                  </div>
+                </div>
+
+                {/* 커스터마이징 옵션 */}
+                <div className="mb-4">
+                  <button
+                    onClick={() => setShowCustomization(!showCustomization)}
+                    className="text-blue-700 hover:text-blue-800 text-sm font-medium underline"
+                  >
+                    {showCustomization ? '기본 설정으로 생성' : '내용 커스터마이징'}
+                  </button>
+                </div>
+
                 <button
                   onClick={generateProposal}
                   disabled={isGenerating}
@@ -92,6 +193,90 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ isOpen, onClose, groupId,
                   {isGenerating ? '제안서 생성 중...' : '제안서 생성하기'}
                 </button>
               </div>
+
+              {/* 커스터마이징 섹션 */}
+              {showCustomization && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="text-lg font-medium text-gray-900 mb-4">제안서 내용 커스터마이징</h4>
+                  
+                  {loadingData ? (
+                    <div className="flex justify-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {/* 불만사항 선택 */}
+                      {painPoints.length > 0 && (
+                        <div>
+                          <h5 className="text-md font-medium text-gray-800 mb-2">포함할 불만사항 선택</h5>
+                          <div className="space-y-2">
+                            {painPoints.map((painPoint, index) => (
+                              <label key={index} className="flex items-start space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedPainPoints.includes(painPoint)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedPainPoints([...selectedPainPoints, painPoint]);
+                                    } else {
+                                      setSelectedPainPoints(selectedPainPoints.filter(p => p !== painPoint));
+                                    }
+                                  }}
+                                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <span className="text-sm text-gray-700">{painPoint}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 토론 내용 선택 */}
+                      {discussions.length > 0 && (
+                        <div>
+                          <h5 className="text-md font-medium text-gray-800 mb-2">포함할 토론 내용 선택</h5>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {discussions.map((discussion) => (
+                              <label key={discussion.id} className="flex items-start space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedDiscussions.includes(discussion.id || '')}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedDiscussions([...selectedDiscussions, discussion.id || '']);
+                                    } else {
+                                      setSelectedDiscussions(selectedDiscussions.filter(id => id !== discussion.id));
+                                    }
+                                  }}
+                                  className="mt-1 h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                />
+                                <div className="flex-1">
+                                  <span className="text-sm text-gray-700">{discussion.content}</span>
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    {discussion.authorRole} • {discussion.timestamp}
+                                  </div>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* 추가 내용 */}
+                      <div>
+                        <h5 className="text-md font-medium text-gray-800 mb-2">추가할 내용 (선택사항)</h5>
+                        <textarea
+                          value={customContent}
+                          onChange={(e) => setCustomContent(e.target.value)}
+                          placeholder="제안서에 추가하고 싶은 내용을 입력하세요..."
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -134,7 +319,7 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ isOpen, onClose, groupId,
           {/* 토론 섹션 */}
           {showDiscussion && proposal && (
             <div className="mb-6">
-              <ProposalDiscussion 
+              <ProposalDiscussionComponent 
                 proposalId={groupId} 
                 currentUser={currentUser} 
               />

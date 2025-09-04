@@ -43,6 +43,9 @@ export interface LetterRequest {
   noticeDays: number;
   contactEmail: string;
   contactPhone: string;
+  selectedPainPoints?: string[];
+  selectedDiscussions?: string[];
+  customContent?: string;
 }
 
 export interface LetterResponse {
@@ -57,11 +60,16 @@ export interface User {
   email?: string;
   password?: string;
   nickname: string;
-  role: 'tenant' | 'landlord' | 'anonymous';
+  role: 'tenant' | 'landlord' | 'anonymous' | 'admin';
   latitude?: number;
   longitude?: number;
   address?: string;
   active?: boolean;
+  // 집주인 인증 관련
+  isVerified?: boolean;
+  businessRegistrationNumber?: string;
+  propertyAddresses?: string[];
+  verificationDocuments?: string[];
 }
 
 export interface ProposalDiscussion {
@@ -91,6 +99,7 @@ export interface Vote {
   proposalId: string;
   userId: string;
   vote: 'agree' | 'disagree';
+  deadline?: string;
 }
 
 export interface VoteResult {
@@ -100,6 +109,44 @@ export interface VoteResult {
   disagreeVotes: number;
   agreePercentage: number;
   disagreePercentage: number;
+}
+
+export interface LandlordVerification {
+  id?: string;
+  timestamp?: string;
+  userId: string;
+  businessRegistrationNumber: string;
+  propertyAddresses: string[];
+  verificationDocuments: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
+
+export interface LandlordProperty {
+  id?: string;
+  timestamp?: string;
+  landlordId: string;
+  address: string;
+  buildingName: string;
+  totalUnits: number;
+  currentTenants: number;
+  avgRent: number;
+  isActive: boolean;
+}
+
+export interface Notification {
+  id?: string;
+  timestamp?: string;
+  userId: string;
+  type: 'proposal' | 'vote' | 'discussion' | 'system' | 'verification';
+  title: string;
+  message: string;
+  isRead: boolean;
+  relatedId?: string; // proposalId, voteId, etc.
+  actionUrl?: string;
+  priority: 'low' | 'medium' | 'high';
 }
 
 export interface ApiResponse<T> {

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Group, User } from '../types';
 import VoteBox from './VoteBox';
 import ProposalModal from './ProposalModal';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface GroupCardProps {
   group: Group;
@@ -60,28 +61,62 @@ export default function GroupCard({ group, currentUser }: GroupCardProps) {
         )}
       </div>
 
-      {/* Market Data */}
+      {/* Market Data Visualization */}
       {group.marketData && group.marketData.transactionCount > 0 && (
         <div className="space-y-3 mb-6 p-3 bg-green-50 rounded-md">
           <h4 className="text-sm font-medium text-green-700 border-b border-green-200 pb-1">
-            Market Data ({group.marketData.transactionCount} transactions)
+            시세 비교 ({group.marketData.transactionCount}건 거래)
           </h4>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-green-600">Market Avg Rent:</span>
-            <span className="font-medium text-green-900">
-              {formatCurrencyK(group.marketData.avgMonthlyRent)}
-            </span>
+          
+          {/* Rent Comparison Chart */}
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  {
+                    name: '우리 그룹',
+                    월세: Math.round(group.avgRentKrw / 10000), // Convert to 만원
+                    보증금: Math.round(group.avgRentKrw * 10 / 10000), // Estimate deposit as 10x rent
+                  },
+                  {
+                    name: '시장 평균',
+                    월세: Math.round(group.marketData.avgMonthlyRent / 10000),
+                    보증금: Math.round(group.marketData.avgDeposit / 10000),
+                  }
+                ]}
+                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" fontSize={12} />
+                <YAxis fontSize={12} />
+                <Tooltip 
+                  formatter={(value, name) => [`${value}만원`, name]}
+                  labelStyle={{ color: '#374151' }}
+                />
+                <Bar dataKey="월세" fill="#3B82F6" name="월세" />
+                <Bar dataKey="보증금" fill="#10B981" name="보증금" />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
           
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-green-600">Market Avg Deposit:</span>
-            <span className="font-medium text-green-900">
-              {formatCurrencyK(group.marketData.avgDeposit)}
-            </span>
+          {/* Key Insights */}
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-white p-2 rounded border">
+              <div className="text-gray-600">우리 그룹 평균</div>
+              <div className="font-medium text-gray-900">
+                {formatCurrencyK(group.avgRentKrw)}
+              </div>
+            </div>
+            <div className="bg-white p-2 rounded border">
+              <div className="text-gray-600">시장 평균</div>
+              <div className="font-medium text-gray-900">
+                {formatCurrencyK(group.marketData.avgMonthlyRent)}
+              </div>
+            </div>
           </div>
           
           <div className="text-xs text-green-600">
-            Latest: {group.marketData.recentTransactionDate}
+            최근 거래: {group.marketData.recentTransactionDate}
           </div>
         </div>
       )}

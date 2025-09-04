@@ -13,6 +13,7 @@ interface AnonymousReport {
 }
 
 interface Vote {
+  deadline?: string;
   id: string;
   title: string;
   description: string;
@@ -31,7 +32,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ admin, onLogout }) => {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [activeTab, setActiveTab] = useState<'reports' | 'votes'>('reports');
   const [isLoading, setIsLoading] = useState(false);
-  const [showVoteModal, setShowVoteModal] = useState(false);
   const [selectedVoteForResults, setSelectedVoteForResults] = useState<Vote | null>(null);
   const [voteResults, setVoteResults] = useState<any>(null);
 
