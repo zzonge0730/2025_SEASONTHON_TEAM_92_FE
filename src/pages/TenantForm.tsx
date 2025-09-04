@@ -54,9 +54,14 @@ export default function TenantForm({ currentUser }: TenantFormProps) {
   return (
     <div className="max-w-2xl mx-auto">
       <div className="bg-white shadow rounded-lg p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">
-          월세 정보 입력
-        </h1>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            STEP 1-3: 거주 프로필 입력
+          </h1>
+          <p className="text-sm text-gray-600">
+            리포트 생성을 위한 핵심 정보를 입력해주세요
+          </p>
+        </div>
         
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Building Information */}

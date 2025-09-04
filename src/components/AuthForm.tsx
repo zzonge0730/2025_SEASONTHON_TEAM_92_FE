@@ -12,6 +12,8 @@ interface AuthFormProps {
 }
 
 interface AuthFormData {
+  username?: string;  // 아이디 (회원가입 시에만)
+  password?: string;  // 패스워드 (회원가입 시에만)
   nickname: string;
   role: 'tenant' | 'landlord' | 'anonymous';
   latitude?: number;
@@ -122,7 +124,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
       <div className="max-w-md w-full space-y-6">
         <div>
           <h2 className="mt-4 text-center text-2xl sm:text-3xl font-extrabold text-gray-900">
-            {isLogin ? '위치 기반 로그인' : '위치 기반 회원가입'}
+            {isLogin ? '위치 기반 로그인' : 'STEP 1: 회원가입 및 거주 인증'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             {isLogin ? "계정이 없으신가요? " : '이미 계정이 있으신가요? '}
@@ -139,6 +141,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
               {isLogin ? '회원가입' : '로그인'}
             </button>
           </p>
+          {!isLogin && (
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <h3 className="text-sm font-medium text-blue-900 mb-2">📋 회원가입 단계</h3>
+              <ol className="text-xs text-blue-800 space-y-1">
+                <li>1. 아이디/패스워드 설정</li>
+                <li>2. GPS 기반 거주지 인증</li>
+                <li>3. 거주 프로필 입력</li>
+              </ol>
+            </div>
+          )}
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
@@ -158,13 +170,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
               {location && (
                 <div className="mt-2 space-y-1">
                   <p className="text-sm text-green-600">
-                    ✅ 위치 확인됨: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                    ✅ 위치 확인됨
                   </p>
                   {districtInfo && (
                     <div className="text-sm text-blue-600 font-medium space-y-1">
-                      <p>🏘️ {districtInfo.fullName} 입장 가능</p>
+                      <p>🏘️ <strong>{districtInfo.fullName}</strong> 거주 인증 완료</p>
                       <p className="text-xs text-gray-500">
-                        좌표: {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                        동 단위 인증으로 신뢰할 수 있는 거주자 데이터만 수집됩니다
                       </p>
                     </div>
                   )}
@@ -174,6 +186,57 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
                 <p className="mt-2 text-sm text-red-600">{locationError}</p>
               )}
             </div>
+
+            {/* 회원가입 시에만 아이디/패스워드 필드 표시 */}
+            {!isLogin && (
+              <>
+                <div>
+                  <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                    아이디
+                  </label>
+                  <input
+                    {...register('username', { 
+                      required: !isLogin ? '아이디는 필수입니다' : false,
+                      minLength: {
+                        value: 4,
+                        message: '아이디는 최소 4자 이상이어야 합니다'
+                      },
+                      maxLength: {
+                        value: 20,
+                        message: '아이디는 20자 이하여야 합니다'
+                      }
+                    })}
+                    type="text"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="아이디를 입력하세요"
+                  />
+                  {errors.username && (
+                    <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    비밀번호
+                  </label>
+                  <input
+                    {...register('password', { 
+                      required: !isLogin ? '비밀번호는 필수입니다' : false,
+                      minLength: {
+                        value: 6,
+                        message: '비밀번호는 최소 6자 이상이어야 합니다'
+                      }
+                    })}
+                    type="password"
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="비밀번호를 입력하세요"
+                  />
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                  )}
+                </div>
+              </>
+            )}
 
             <div>
               <label htmlFor="nickname" className="block text-sm font-medium text-gray-700">
