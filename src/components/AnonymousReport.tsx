@@ -21,7 +21,7 @@ const AnonymousReport: React.FC<AnonymousReportProps> = ({ onReportSubmitted }) 
   const onSubmit = async (data: ReportFormData) => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reports/anonymous`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/reports/anonymous`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

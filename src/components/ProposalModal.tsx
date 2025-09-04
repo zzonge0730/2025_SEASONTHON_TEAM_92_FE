@@ -74,7 +74,7 @@ const ProposalModal: React.FC<ProposalModalProps> = ({ isOpen, onClose, groupId,
         customContent: customContent.trim() || undefined
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/letters`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/letters`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -25,7 +25,7 @@ const ProposalDiscussion: React.FC<ProposalDiscussionProps> = ({ proposalId, cur
 
   const fetchDiscussions = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/discussions/proposal/${proposalId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/discussions/proposal/${proposalId}`);
       const result = await response.json();
       
       if (result.ok) {
@@ -219,7 +219,7 @@ const RepliesList: React.FC<{
 
   const fetchReplies = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/discussions/${parentId}/replies`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/discussions/${parentId}/replies`);
       const result = await response.json();
       
       if (result.ok) {
@@ -238,7 +238,7 @@ const RepliesList: React.FC<{
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/discussions/${parentId}/reply`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/discussions/${parentId}/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

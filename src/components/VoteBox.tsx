@@ -20,7 +20,7 @@ const VoteBox: React.FC<VoteBoxProps> = ({ proposalId, currentUser, onVoteChange
 
   const fetchVoteResult = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/votes/proposal/${proposalId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/votes/proposal/${proposalId}`);
       const result = await response.json();
       
       if (result.ok) {
@@ -34,7 +34,7 @@ const VoteBox: React.FC<VoteBoxProps> = ({ proposalId, currentUser, onVoteChange
 
   const fetchUserVote = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/votes/proposal/${proposalId}/user/${currentUser.id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/votes/proposal/${proposalId}/user/${currentUser.id}`);
       const result = await response.json();
       
       if (result.ok && result.data) {
@@ -53,7 +53,7 @@ const VoteBox: React.FC<VoteBoxProps> = ({ proposalId, currentUser, onVoteChange
 
     setIsVoting(true);
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/votes`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/votes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
