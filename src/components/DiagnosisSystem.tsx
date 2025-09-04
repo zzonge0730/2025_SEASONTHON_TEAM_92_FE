@@ -266,6 +266,9 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
   const handleNext = () => {
     if (currentStep < DIAGNOSIS_QUESTIONS.length - 1) {
       setCurrentStep(currentStep + 1);
+    } else {
+      // 마지막 단계에서 완료 처리
+      onSubmit(answers);
     }
   };
 
@@ -284,15 +287,22 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
     return (
       <div className="max-w-2xl mx-auto">
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">진단 완료!</h2>
-          <p className="text-gray-600 mb-6">모든 질문에 답변해주셔서 감사합니다.</p>
-          <button
-            onClick={() => onSubmit(answers)}
-            disabled={isSubmitting}
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {isSubmitting ? '결과 생성 중...' : '진단 결과 확인하기'}
-          </button>
+          <div className="text-center">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">진단 완료!</h2>
+            <p className="text-gray-600 mb-6">모든 질문에 답변해주셔서 감사합니다.</p>
+            <button
+              onClick={() => onSubmit(answers)}
+              disabled={isSubmitting}
+              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 font-medium"
+            >
+              {isSubmitting ? '결과 생성 중...' : '진단 결과 확인하기'}
+            </button>
+          </div>
         </div>
       </div>
     );
