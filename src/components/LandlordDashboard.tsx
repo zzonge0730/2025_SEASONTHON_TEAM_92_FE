@@ -11,7 +11,6 @@ interface LandlordDashboardProps {
 export default function LandlordDashboard({ currentUser, onLogout }: LandlordDashboardProps) {
   const [properties, setProperties] = useState<LandlordProperty[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAddProperty, setShowAddProperty] = useState(false);
 
   useEffect(() => {
     fetchProperties();
@@ -140,7 +139,7 @@ export default function LandlordDashboard({ currentUser, onLogout }: LandlordDas
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold text-gray-900">내 건물 관리</h2>
             <button
-              onClick={() => setShowAddProperty(true)}
+              onClick={() => alert('건물 추가 기능은 준비 중입니다.')}
               className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               건물 추가
