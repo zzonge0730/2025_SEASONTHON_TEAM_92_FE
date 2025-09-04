@@ -73,23 +73,20 @@ export interface LetterResponse {
   usedLlm: boolean;
 }
 
-export interface User {
-  id?: string;
-  timestamp?: string;
-  email?: string;
-  password?: string;
-  nickname: string;
-  role: 'tenant' | 'landlord' | 'anonymous' | 'admin';
-  latitude?: number;
-  longitude?: number;
-  address?: string;
-  active?: boolean;
-  // 집주인 인증 관련
-  isVerified?: boolean;
-  businessRegistrationNumber?: string;
-  propertyAddresses?: string[];
-  verificationDocuments?: string[];
+export interface DiagnosisStats {
+  totalScore: number;
+  categoryScores: {
+    rent: number;
+    contract: number;
+    communication: number;
+    maintenance: number;
+  };
+  userScores: { [key: string]: number };
+  buildingAverageScores: { [key: string]: number };
+  neighborhoodAverageScores: { [key: string]: number };
+  recommendations: string[];
 }
+
 
 export interface ProposalDiscussion {
   id?: string;

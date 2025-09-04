@@ -37,6 +37,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAdminLogin, onBack }) => {
       if (result.ok) {
         const admin: User = {
           id: result.data.id,
+          email: result.data.email || '',
           nickname: result.data.nickname,
           role: 'admin',
           address: result.data.address || '',

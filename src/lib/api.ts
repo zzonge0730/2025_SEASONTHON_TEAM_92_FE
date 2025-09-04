@@ -51,6 +51,14 @@ export const groupApi = {
     const response = await api.get(`/groups?scope=${scope}`);
     return response.data;
   },
+  getGroupPainPoints: async (groupId: string): Promise<ApiResponse<string[]>> => {
+    const response = await api.get(`/groups/${groupId}/pain-points`);
+    return response.data;
+  },
+  getGroupDiscussions: async (groupId: string): Promise<ApiResponse<any[]>> => {
+    const response = await api.get(`/groups/${groupId}/discussions`);
+    return response.data;
+  },
 };
 
 export const tenantApi = {
@@ -81,6 +89,14 @@ export const landlordApi = {
     const response = await api.get('/landlord/data');
     return response.data;
   },
+  getProperties: async (): Promise<ApiResponse<any[]>> => {
+    const response = await api.get('/landlord/properties');
+    return response.data;
+  },
+  submitVerification: async (verification: any): Promise<ApiResponse<any>> => {
+    const response = await api.post('/landlord/verification', verification);
+    return response.data;
+  },
 };
 
 export const notificationApi = {
@@ -91,6 +107,10 @@ export const notificationApi = {
   },
   markAsRead: async (id: string): Promise<ApiResponse<string>> => {
     const response = await api.put(`/notifications/${id}/read`);
+    return response.data;
+  },
+  markAllAsRead: async (): Promise<ApiResponse<string>> => {
+    const response = await api.put('/notifications/read-all');
     return response.data;
   },
 };

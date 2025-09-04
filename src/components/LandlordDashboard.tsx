@@ -19,7 +19,7 @@ export default function LandlordDashboard({ currentUser, onLogout }: LandlordDas
   const fetchProperties = async () => {
     setLoading(true);
     try {
-      const response = await landlordApi.getProperties(currentUser.id || '');
+      const response = await landlordApi.getProperties();
       if (response.ok) {
         setProperties(response.data || []);
       }

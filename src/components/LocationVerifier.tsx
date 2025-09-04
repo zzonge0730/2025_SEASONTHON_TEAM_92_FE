@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { User } from '../types';
@@ -63,7 +63,7 @@ export default function LocationVerifier({ currentUser, onVerificationSuccess }:
         
         setIsLoading(false);
       },
-      (error) => {
+      () => {
         setLocationError('GPS 위치 정보를 가져올 수 없습니다. 브라우저의 위치 정보 접근 권한을 확인해주세요.');
         setIsLoading(false);
       }

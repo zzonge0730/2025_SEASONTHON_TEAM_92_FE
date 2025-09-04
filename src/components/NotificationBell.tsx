@@ -85,7 +85,7 @@ export default function NotificationBell({ currentUser }: NotificationBellProps)
     
     setLoading(true);
     try {
-      await notificationApi.markAllAsRead(currentUser.id);
+      await notificationApi.markAllAsRead();
       setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
       setUnreadCount(0);
     } catch (error) {

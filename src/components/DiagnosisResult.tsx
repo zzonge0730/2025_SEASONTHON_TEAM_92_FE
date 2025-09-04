@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { User, DiagnosisStats } from '../types';
 import { diagnosisApi } from '../lib/api';
@@ -6,6 +6,8 @@ import ComparisonChart from './ComparisonChart'; // Import the new chart compone
 
 interface DiagnosisResultProps {
   currentUser: User;
+  result?: any;
+  onGenerateReport?: () => void;
 }
 
 export default function DiagnosisResult({ currentUser }: DiagnosisResultProps) {

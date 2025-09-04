@@ -114,6 +114,7 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         </div>
         {diagnosisResult ? (
           <DiagnosisResult 
+            currentUser={currentUser}
             result={diagnosisResult} 
             onGenerateReport={handleGenerateReport}
           />

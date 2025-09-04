@@ -57,7 +57,7 @@ export default function NotificationsPage({ currentUser }: NotificationsPageProp
     if (!currentUser?.id) return;
     
     try {
-      await notificationApi.markAllAsRead(currentUser.id);
+      await notificationApi.markAllAsRead();
       setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);

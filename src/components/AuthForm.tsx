@@ -6,10 +6,9 @@ import { authApi } from '../lib/api';
 
 interface AuthFormProps {
   onAuthSuccess: (user: User) => void;
-  onAdminLogin?: () => void;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
+const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   

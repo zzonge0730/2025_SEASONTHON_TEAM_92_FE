@@ -7,24 +7,18 @@ import GroupsPage from './pages/GroupsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ReportView from './pages/ReportView';
 import AuthForm from './components/AuthForm';
-import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
-import LandlordDashboard from './components/LandlordDashboard';
 import AnonymousReport from './components/AnonymousReport';
 import NegotiationGuide from './components/NegotiationGuide';
 import TenantVoting from './components/TenantVoting';
-import NotificationBell from './components/NotificationBell';
-import HowItWorks from './components/HowItWorks';
 import DiagnosisSystem from './components/DiagnosisSystem';
 import DiagnosisResult from './components/DiagnosisResult';
 import LocationVerifier from './components/LocationVerifier';
 import { User } from './types';
-import { hasPermission, getRoleDisplayName } from './utils/rolePermissions';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser');
@@ -46,7 +40,6 @@ function App() {
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setShowAdminLogin(false);
     localStorage.removeItem('currentUser');
   };
 
@@ -131,7 +124,7 @@ function App() {
             <Route path="/guide" element={<NegotiationGuide />} />
             <Route path="/voting" element={<TenantVoting currentUser={currentUser} />} />
             <Route path="/notifications" element={<NotificationsPage currentUser={currentUser} />} />
-            <Route path="/report/advanced" element={<ReportView currentUser={currentUser} />} />
+            <Route path="/report/advanced" element={<ReportView />} />
             <Route path="/diagnosis" element={<DiagnosisSystem currentUser={currentUser} onComplete={() => window.location.href = '/'} />} />
             <Route path="/diagnosis/result" element={<DiagnosisResult currentUser={currentUser} />} />
           </Routes>
