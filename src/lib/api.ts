@@ -1,8 +1,30 @@
 import axios from 'axios';
 import { ApiResponse } from '../types';
 
+// 환경에 따른 API 기본 URL 설정
+const getBaseURL = () => {
+  // 환경변수가 설정되어 있으면 우선 사용
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // 개발 환경
+  if (import.meta.env.DEV) {
+    return 'http://172.21.135.200:8891'; // WSL IP 주소
+  }
+  
+  // 프로덕션 환경 - 실제 백엔드 도메인으로 변경 필요
+  if (import.meta.env.PROD) {
+    // 실제 백엔드 배포 URL (Railway 배포)
+    return 'https://2025seasonthonteam92be-production.up.railway.app';
+  }
+  
+  // 기본값
+  return 'http://localhost:8891';
+};
+
 const api = axios.create({
-  baseURL: 'http://172.21.135.200:8891', // WSL IP 주소 사용
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },

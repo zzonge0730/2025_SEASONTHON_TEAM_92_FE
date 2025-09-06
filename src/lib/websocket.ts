@@ -26,7 +26,11 @@ class WebSocketService {
     }
 
     try {
-      const socket = new SockJS('http://localhost:8891/ws');
+      // 환경에 따른 WebSocket URL 설정
+      const wsUrl = import.meta.env.VITE_WS_URL || 
+        (import.meta.env.PROD ? 'https://2025seasonthonteam92be-production.up.railway.app/ws' : 'http://172.21.135.200:8891/ws');
+      
+      const socket = new SockJS(wsUrl);
       this.stompClient = Client.over(socket);
       
       this.stompClient.connect({}, () => {
