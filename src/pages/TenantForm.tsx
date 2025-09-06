@@ -2,16 +2,17 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { tenantApi } from '../lib/api';
+import { tenantApi, authApi } from '../lib/api';
 import { Tenant, User } from '../types';
 import OnboardingProgress from '../components/OnboardingProgress';
 
 interface TenantFormProps {
   currentUser: User;
   onComplete?: (updatedUser: User) => void;
+  onGoHome?: () => void;
 }
 
-export default function TenantForm({ currentUser, onComplete }: TenantFormProps) {
+export default function TenantForm({ currentUser, onComplete, onGoHome }: TenantFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   
@@ -55,10 +56,31 @@ export default function TenantForm({ currentUser, onComplete }: TenantFormProps)
           profileCompleted: true
         };
         
-        if (onComplete) {
-          onComplete(updatedUser);
-        } else {
-          navigate('/');
+        try {
+          // Update user in backend
+          const response = await authApi.updateUser(updatedUser);
+          if (response.ok) {
+            if (onComplete) {
+              onComplete(response.data);
+            } else {
+              navigate('/');
+            }
+          } else {
+            // If backend update fails, still update locally
+            if (onComplete) {
+              onComplete(updatedUser);
+            } else {
+              navigate('/');
+            }
+          }
+        } catch (error) {
+          console.error('Error updating user:', error);
+          // If backend update fails, still update locally
+          if (onComplete) {
+            onComplete(updatedUser);
+          } else {
+            navigate('/');
+          }
         }
       } else {
         toast.error(response.message || '정보 제출에 실패했습니다');
@@ -188,26 +210,6 @@ export default function TenantForm({ currentUser, onComplete }: TenantFormProps)
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  건물 유형 *
-                </label>
-                <select
-                  {...register('buildingType', { required: '건물 유형을 선택해주세요' })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                >
-                  <option value="">건물 유형을 선택하세요</option>
-                  <option value="apartment">아파트</option>
-                  <option value="officetel">오피스텔</option>
-                  <option value="villa">빌라</option>
-                </select>
-                {errors.buildingType && (
-                  <p className="mt-1 text-sm text-red-600">{errors.buildingType.message}</p>
-                )}
-              </div>
-              
-            </div>
           </div>
 
           {/* 계약 정보 */}
@@ -377,7 +379,17 @@ export default function TenantForm({ currentUser, onComplete }: TenantFormProps)
           </div>
 
           {/* Submit Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-between">
+            {onGoHome && (
+              <button
+                type="button"
+                onClick={onGoHome}
+                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                🏠 홈으로 돌아가기
+              </button>
+            )}
+            
             <button
               type="submit"
               disabled={isSubmitting || !consentValue}

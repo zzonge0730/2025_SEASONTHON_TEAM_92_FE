@@ -188,8 +188,23 @@ export default function Dashboard({ currentUser }: DashboardProps) {
         </h1>
         <p className="text-indigo-100">
           {getRoleDisplayName(currentUser.role)}으로 활동하고 계시는군요. 
-          오늘도 공동 협상을 통해 더 나은 임대 조건을 만들어보세요.
+          {currentUser.onboardingCompleted ? 
+            ' 온보딩이 완료되었습니다! 이제 서비스를 자유롭게 이용하실 수 있습니다.' :
+            ' 오늘도 공동 협상을 통해 더 나은 임대 조건을 만들어보세요.'
+          }
         </p>
+        {currentUser.onboardingCompleted && (
+          <div className="mt-3 p-3 bg-green-500 bg-opacity-20 rounded-lg">
+            <p className="text-sm text-green-100">
+              ✅ 온보딩 완료 - 프로필 입력이 완료되었습니다.
+              {!currentUser.diagnosisCompleted && (
+                <span className="block mt-1">
+                  💡 진단을 완료하시면 더 정확한 협상 리포트를 받으실 수 있습니다.
+                </span>
+              )}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 새로운 기능 카드들 */}
@@ -208,7 +223,8 @@ export default function Dashboard({ currentUser }: DashboardProps) {
             onClick={() => setCurrentView('diagnosis')}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
           >
-            진단 시작하기
+            {currentUser.diagnosisCompleted ? '진단 결과 보기' : 
+             currentUser.onboardingCompleted && !currentUser.diagnosisCompleted ? '진단 다시 시작하기' : '진단 시작하기'}
           </button>
         </div>
 
@@ -242,10 +258,10 @@ export default function Dashboard({ currentUser }: DashboardProps) {
           </div>
           <button
             onClick={() => setCurrentView('report')}
-            disabled={!diagnosisResult}
+            disabled={!currentUser.diagnosisCompleted}
             className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {diagnosisResult ? '리포트 생성하기' : '진단 완료 후 이용 가능'}
+            {currentUser.diagnosisCompleted ? '리포트 생성하기' : '진단 완료 후 이용 가능'}
           </button>
         </div>
       </div>

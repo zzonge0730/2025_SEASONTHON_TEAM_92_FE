@@ -2,11 +2,47 @@ import axios from 'axios';
 import { ApiResponse } from '../types';
 
 const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8891'}`,
+  baseURL: 'http://localhost:8891', // 로컬 개발용
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// JWT 토큰을 자동으로 헤더에 추가하는 인터셉터
+api.interceptors.request.use((config) => {
+  console.log('🚀 API 요청 시작:', config.method?.toUpperCase(), config.url);
+  console.log('📤 요청 데이터:', config.data);
+  console.log('🌐 Base URL:', config.baseURL);
+  
+  const token = localStorage.getItem('jwtToken');
+  
+  // JWT 토큰이 필요하지 않은 엔드포인트들
+  const noAuthEndpoints = ['/api/auth/register', '/api/auth/login', '/api/location/verify'];
+  const needsAuth = !noAuthEndpoints.some(endpoint => config.url?.includes(endpoint));
+  
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    if (needsAuth) {
+      console.log('🔑 JWT 토큰이 요청 헤더에 추가됨:', config.url);
+      console.log('🎫 토큰 미리보기:', token.substring(0, 50) + '...');
+    }
+  } else if (needsAuth) {
+    console.log('❌ JWT 토큰이 없음:', config.url);
+  }
+  return config;
+});
+
+// 응답 인터셉터 추가
+api.interceptors.response.use(
+  (response) => {
+    console.log('✅ API 응답 성공:', response.config.url, response.status);
+    return response;
+  },
+  (error) => {
+    console.error('❌ API 응답 에러:', error.config?.url, error.response?.status, error.message);
+    return Promise.reject(error);
+  }
+);
 
 export const authApi = {
   register: async (userData: any): Promise<ApiResponse<any>> => {
@@ -15,6 +51,14 @@ export const authApi = {
   },
   login: async (credentials: any): Promise<ApiResponse<any>> => {
     const response = await api.post('/api/auth/login', credentials);
+    return response.data;
+  },
+  updateUser: async (userData: any): Promise<ApiResponse<any>> => {
+    const response = await api.put('/api/auth/update', userData);
+    return response.data;
+  },
+  getCurrentUser: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get('/api/auth/me');
     return response.data;
   },
 };

@@ -25,7 +25,16 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
         : await authApi.register(data);
 
       if (response.ok) {
-        onAuthSuccess(response.data);
+        if (isLoginView && response.data.token) {
+          // JWT 토큰을 localStorage에 저장
+          localStorage.setItem('jwtToken', response.data.token);
+          // 사용자 정보도 저장
+          localStorage.setItem('currentUser', JSON.stringify(response.data.user));
+          onAuthSuccess(response.data.user);
+        } else {
+          // 회원가입의 경우
+          onAuthSuccess(response.data);
+        }
         toast.success(isLoginView ? '로그인 성공!' : '회원가입 성공! 다음 단계로 이동합니다.');
         reset();
       } else {

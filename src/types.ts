@@ -11,6 +11,8 @@ export interface User {
   neighborhood?: string;
   buildingName?: string;
   profileCompleted?: boolean;
+  diagnosisCompleted?: boolean;
+  onboardingCompleted?: boolean;
   active?: boolean;
 }
 

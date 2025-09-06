@@ -17,6 +17,7 @@ import DiagnosisSystem from './components/DiagnosisSystem';
 import DiagnosisResult from './components/DiagnosisResult';
 import LocationVerifier from './components/LocationVerifier';
 import { User } from './types';
+import { authApi } from './lib/api';
 
 function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -24,16 +25,36 @@ function App() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      try {
-        setCurrentUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('currentUser');
+    const initializeUser = async () => {
+      const savedUser = localStorage.getItem('currentUser');
+      const token = localStorage.getItem('jwtToken');
+      
+      if (savedUser && token) {
+        try {
+          const user = JSON.parse(savedUser);
+          setCurrentUser(user);
+          
+          // 서버에서 최신 사용자 정보 가져오기 (백그라운드에서)
+          try {
+            const response = await authApi.getCurrentUser();
+            if (response.ok && response.data) {
+              // 서버의 최신 정보로 업데이트
+              setCurrentUser(response.data);
+              localStorage.setItem('currentUser', JSON.stringify(response.data));
+            }
+          } catch (error) {
+            console.log('서버에서 사용자 정보를 가져올 수 없습니다. 로컬 정보를 사용합니다.');
+          }
+        } catch (error) {
+          console.error('Error parsing saved user:', error);
+          localStorage.removeItem('currentUser');
+          localStorage.removeItem('jwtToken');
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+    
+    initializeUser();
   }, []);
 
   const handleAuthSuccess = (user: User) => {
@@ -45,6 +66,7 @@ function App() {
     setCurrentUser(null);
     setShowAdminLogin(false);
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('jwtToken');
   };
 
   const handleAdminLogin = () => {
@@ -85,12 +107,66 @@ function App() {
 
     // After login, check if location is verified
     if (!currentUser.address || !currentUser.buildingName) {
-        return <LocationVerifier currentUser={currentUser} onVerificationSuccess={handleAuthSuccess} />;
+        return <LocationVerifier currentUser={currentUser} onVerificationSuccess={handleAuthSuccess} onGoHome={handleLogout} />;
     }
 
     // Check if profile is completed
     if (!currentUser.profileCompleted) {
-        return <TenantForm currentUser={currentUser} onComplete={handleAuthSuccess} />;
+        return <TenantForm currentUser={currentUser} onComplete={handleAuthSuccess} onGoHome={handleLogout} />;
+    }
+
+    // Check if diagnosis is completed (only if onboarding is not completed)
+    if (!currentUser.onboardingCompleted) {
+        return <DiagnosisSystem 
+            currentUser={currentUser} 
+            onComplete={async () => {
+                // Update user with diagnosis completion
+                const updatedUser = {
+                    ...currentUser,
+                    diagnosisCompleted: true,
+                    onboardingCompleted: true
+                };
+                
+                try {
+                    // Update user in backend
+                    const response = await authApi.updateUser(updatedUser);
+                    if (response.ok) {
+                        handleAuthSuccess(response.data);
+                    } else {
+                        // If backend update fails, still update locally
+                        handleAuthSuccess(updatedUser);
+                    }
+                } catch (error) {
+                    console.error('Error updating user:', error);
+                    // If backend update fails, still update locally
+                    handleAuthSuccess(updatedUser);
+                }
+            }}
+            onSkip={async () => {
+                // Update user with diagnosis skipped
+                const updatedUser = {
+                    ...currentUser,
+                    diagnosisCompleted: false, // 진단을 스킵했으므로 false
+                    onboardingCompleted: true
+                };
+                
+                try {
+                    // Update user in backend
+                    const response = await authApi.updateUser(updatedUser);
+                    if (response.ok) {
+                        handleAuthSuccess(response.data);
+                    } else {
+                        // If backend update fails, still update locally
+                        handleAuthSuccess(updatedUser);
+                    }
+                } catch (error) {
+                    console.error('Error updating user:', error);
+                    // If backend update fails, still update locally
+                    handleAuthSuccess(updatedUser);
+                }
+            }}
+            onGoHome={handleLogout}
+        />;
     }
 
 

@@ -7,6 +7,8 @@ import { diagnosisApi } from '../lib/api';
 interface DiagnosisSystemProps {
   currentUser: User;
   onComplete: (result: ComprehensiveDiagnosis) => void;
+  onSkip?: () => void;
+  onGoHome?: () => void;
 }
 
 interface DiagnosisFormData {
@@ -136,7 +138,7 @@ const DIAGNOSIS_QUESTIONS: DiagnosisQuestion[] = [
   }
 ];
 
-export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSystemProps) {
+export default function DiagnosisSystem({ currentUser, onComplete, onSkip, onGoHome }: DiagnosisSystemProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [answers, setAnswers] = useState<DiagnosisFormData>({});
@@ -311,13 +313,95 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-2">진단 완료!</h2>
             <p className="text-gray-600 mb-6">모든 질문에 답변해주셔서 감사합니다.</p>
+            <div className="space-y-3">
+              <button
+                onClick={() => onSubmit(answers)}
+                disabled={isSubmitting}
+                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 font-medium"
+              >
+                {isSubmitting ? '결과 생성 중...' : '진단 결과 확인하기'}
+              </button>
+              
+              {onGoHome && (
+                <button
+                  onClick={onGoHome}
+                  className="w-full bg-white text-gray-600 py-2 px-4 rounded-md hover:bg-gray-50 font-medium border border-gray-300"
+                >
+                  🏠 홈으로 돌아가기
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 첫 번째 질문일 때 스킵 옵션 표시
+  if (currentStep === 0) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white shadow rounded-lg p-6">
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-2">
+              <h2 className="text-xl font-bold text-gray-900">우리 집 종합 진단</h2>
+              <span className="text-sm text-gray-500">{currentStep + 1} / {DIAGNOSIS_QUESTIONS.length}</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${((currentStep + 1) / DIAGNOSIS_QUESTIONS.length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
+
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">거주 환경 진단을 시작합니다</h3>
+            <p className="text-gray-600 mb-6">
+              총 {DIAGNOSIS_QUESTIONS.length}개의 질문으로 구성된 진단을 통해<br/>
+              우리 집의 거주 환경을 종합적으로 분석해드립니다.
+            </p>
+          </div>
+
+          <div className="space-y-4">
             <button
-              onClick={() => onSubmit(answers)}
-              disabled={isSubmitting}
-              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 font-medium"
+              onClick={handleNext}
+              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 font-medium"
             >
-              {isSubmitting ? '결과 생성 중...' : '진단 결과 확인하기'}
+              진단 시작하기
             </button>
+            
+            {onSkip && (
+              <button
+                onClick={onSkip}
+                className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 font-medium"
+              >
+                나중에 하기 (스킵)
+              </button>
+            )}
+            
+            {onGoHome && (
+              <button
+                onClick={onGoHome}
+                className="w-full bg-white text-gray-600 py-2 px-4 rounded-md hover:bg-gray-50 font-medium border border-gray-300"
+              >
+                🏠 홈으로 돌아가기
+              </button>
+            )}
+          </div>
+
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-blue-800">
+              💡 <strong>진단을 완료하시면</strong><br/>
+              • 우리 집 종합 점수 확인<br/>
+              • 같은 건물/동네 이웃과 비교<br/>
+              • 맞춤형 협상 리포트 생성 가능
+            </p>
           </div>
         </div>
       </div>
@@ -366,15 +450,27 @@ export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSy
             )}
           </div>
 
-          <div className="flex justify-between">
-            <button
-              type="button"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              이전
-            </button>
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-2">
+              <button
+                type="button"
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                이전
+              </button>
+              
+              {onGoHome && (
+                <button
+                  type="button"
+                  onClick={onGoHome}
+                  className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                >
+                  🏠 홈
+                </button>
+              )}
+            </div>
             
             <button
               type="button"
