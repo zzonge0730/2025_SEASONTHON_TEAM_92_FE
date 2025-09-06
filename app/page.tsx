@@ -173,7 +173,7 @@ export default function HomePage() {
                   <i className="ri-home-heart-line text-white text-sm"></i>
                 </div>
                 <h1 className={`text-xl font-bold transition-colors ${isScrolled ? 'text-gray-900' : 'text-white'}`}>
-                  월세 공동협약 네트워크
+                  월세의 정석
                 </h1>
               </div>
             </div>
@@ -483,9 +483,9 @@ export default function HomePage() {
             <div className="hidden lg:block">
               <div className="relative">
                 <img
-                  src="https://readdy.ai/api/search-image?query=modern%20apartment%20rental%20management%20platform%20interface%20displayed%20on%20sleek%20laptop%20and%20smartphone%20screens%2C%20featuring%20warm%20yellow%20mustard%20color%20scheme%20with%20FEED9F%20F7D327%20D0A823%20palette%2C%20clean%20dashboard%20design%20showing%20rent%20negotiation%20tools%20and%20data%20analytics%2C%20professional%20device%20mockups%20against%20soft%20gradient%20background%20in%20matching%20yellow%20tones%2C%20contemporary%20UI%20design%20with%20charts%20and%20apartment%20listings&width=600&height=400&seq=rental-platform-devices-ui&orientation=landscape"
-                  alt="월세의 정석 플랫폼 화면"
-                  className="w-full max-w-lg mx-auto rounded-2xl shadow-2xl object-cover object-top"
+                  src="https://readdy.ai/api/search-image?query=modern%20clean%20website%20interface%20mockup%20on%20laptop%20screen%20showing%20rental%20price%20analysis%20dashboard%20with%20gray%20and%20white%20color%2C%20professional%20minimal%20design%2C%20realistic%20device%20mockup%20against%20dark%20background&width=600&height=400&seq=rental-website-mockup-gray&orientation=landscape"
+                  alt="월세 공동협약 네트워크 웹사이트"
+                  className="w-full max-w-lg mx-auto rounded-2xl shadow-2xl object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t rounded-2xl" style={{ background: 'linear-gradient(to top, rgba(254,237,159,0.1), transparent)' }}></div>
               </div>
@@ -810,7 +810,7 @@ export default function HomePage() {
                 <div className="w-8 h-8 bg-gray-700 rounded-lg flex items-center justify-center">
                   <i className="ri-home-heart-line text-white text-sm"></i>
                 </div>
-                <h3 className="text-xl font-bold">월세 공동협약 네트워크</h3>
+                <h3 className="text-xl font-bold">월세의 정석</h3>
               </div>
               <p className="text-gray-400 mb-6">
                 공정한 월세를 위한 스마트한 협상 플랫폼
@@ -838,7 +838,7 @@ export default function HomePage() {
 
           <div className="border-t border-gray-800 pt-8 mt-8">
             <div className="flex flex-col md:flex-row justify-between items-center">
-              <p className="text-gray-400">&copy; 2024 월세 공동협약 네트워크. All rights reserved.</p>
+              <p className="text-gray-400">&copy; 2024 월세의 정석. All rights reserved.</p>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <a href="#" className="text-gray-400 hover:text-white transition-colors cursor-pointer">개인정보처리방침</a>
                 <a href="#" className="text-gray-400 hover:text-white transition-colors cursor-pointer">서비스 이용약관</a>

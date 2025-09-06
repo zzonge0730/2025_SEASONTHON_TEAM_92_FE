@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API 기본 URL 설정
-const API_BASE_URL = 'https://www.jinwook.shop';
+const API_BASE_URL = 'http://localhost:8891'; // 2025_SEASONTHON_TEAM_92_BE의 기본 포트
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -20,7 +20,8 @@ api.interceptors.request.use((config) => {
   
   const token = localStorage.getItem('jwtToken');
   
-  const noAuthEndpoints = ['/member/create', '/member/doLogin'];
+  // JWT 토큰이 필요하지 않은 엔드포인트들 (2025_SEASONTHON_TEAM_92_BE 기준)
+  const noAuthEndpoints = ['/api/auth/register', '/api/auth/login', '/api/location/verify'];
   const needsAuth = !noAuthEndpoints.some(endpoint => config.url?.includes(endpoint));
   
   if (token) {
@@ -67,38 +68,38 @@ export interface User {
   onboardingCompleted?: boolean;
 }
 
-// 인증 API
+// 인증 API (2025_SEASONTHON_TEAM_92_BE와 일치)
 export const authApi = {
   register: async (userData: any): Promise<ApiResponse<User>> => {
-    const response = await api.post('/member/create', userData);
+    const response = await api.post('/api/auth/register', userData);
     return response.data;
   },
   
   login: async (credentials: any): Promise<ApiResponse<{ user: User; token: string }>> => {
-    const response = await api.post('/member/doLogin', credentials);
+    const response = await api.post('/api/auth/login', credentials);
     return response.data;
   },
   
-  // updateUser: async (userData: any): Promise<ApiResponse<User>> => {
-  //   const response = await api.put('/api/auth/update', userData);
-  //   return response.data;
-  // },
+  updateUser: async (userData: any): Promise<ApiResponse<User>> => {
+    const response = await api.put('/api/auth/update', userData);
+    return response.data;
+  },
   
   getCurrentUser: async (): Promise<ApiResponse<User>> => {
-    const response = await api.get('/member/profile');
+    const response = await api.get('/api/auth/me');
     return response.data;
   },
 };
 
-// // 위치 API (team_backend에 미구현)
-// export const locationApi = {
-//   verifyLocation: async (payload: any): Promise<ApiResponse<any>> => {
-//     const response = await api.post('/api/location/verify', payload);
-//     return response.data;
-//   },
-// };
+// 위치 API (2025_SEASONTHON_TEAM_92_BE와 일치)
+export const locationApi = {
+  verifyLocation: async (payload: any): Promise<ApiResponse<any>> => {
+    const response = await api.post('/api/location/verify', payload);
+    return response.data;
+  },
+};
 
-// // 그룹 API (team_backend에 미구현)
+// // 그룹 API (사용자 요청으로 비활성화)
 // export const groupApi = {
 //   getGroups: async (scope: 'building' | 'neighborhood'): Promise<ApiResponse<any[]>> => {
 //     const response = await api.get(`/api/groups?scope=${scope}`);
@@ -116,23 +117,25 @@ export const authApi = {
 //   },
 // };
 
-// 진단 API
+// 진단 API (2025_SEASONTHON_TEAM_92_BE 경로에 맞춤)
 export const diagnosisApi = {
   submitDiagnosis: async (diagnosisData: any): Promise<ApiResponse<any>> => {
-    const response = await api.post('/api/v1/diagnosis/responses', diagnosisData);
+    const response = await api.post('/api/diagnoses', diagnosisData); // /api/diagnosis -> /api/diagnoses
     return response.data;
   },
   
   getDiagnosisResult: async (): Promise<ApiResponse<any>> => {
-    const response = await api.get('/api/v1/diagnosis/result');
+    // /api/diagnosis/result -> /api/diagnoses/comparison/{userId}
+    // 프론트엔드 호출부에서 userId를 전달하도록 수정 필요
+    const response = await api.get('/api/diagnoses/comparison/YOUR_USER_ID_HERE'); 
     return response.data;
   },
 };
 
-// // 리포트 API (team_backend에 미구현)
+// // 리포트 API (사용자 요청으로 비활성화)
 // export const reportApi = {
 //   generateReport: async (): Promise<ApiResponse<any>> => {
-//     const response = await api.post('/api/reports/generate', userData);
+//     const response = await api.post('/api/reports/generate');
 //     return response.data;
 //   },
 //   
@@ -147,24 +150,26 @@ export const diagnosisApi = {
 //   },
 // };
 
-// 주간 미션 API
+// 주간 미션 API (2025_SEASONTHON_TEAM_92_BE 경로에 맞춤)
 export const missionApi = {
   getWeeklyMission: async (): Promise<ApiResponse<any>> => {
-    const response = await api.get('/mission/weekly/current');
+    const response = await api.get('/api/missions/current'); // /api/missions/weekly -> /api/missions/current
     return response.data;
   },
   
-  // // 백엔드 경로에 missionId가 필요하여 프론트엔드 호출부 수정 필요
-  // submitMissionResponse: async (missionData: any): Promise<ApiResponse<any>> => {
-  //   const response = await api.post('/mission/weekly/participate', missionData);
-  //   return response.data;
-  // },
+  submitMissionResponse: async (missionData: any): Promise<ApiResponse<any>> => {
+    // /api/missions/submit -> /api/missions/participate
+    // 백엔드 경로에 missionId가 필요하여 프론트엔드 호출부 수정 필요
+    const response = await api.post('/api/missions/participate', missionData); 
+    return response.data;
+  },
   
-  // // 백엔드 경로에 missionId가 필요하여 프론트엔드 호출부 수정 필요
-  // getMissionResults: async (): Promise<ApiResponse<any>> => {
-  //   const response = await api.get('/mission/weekly/results');
-  //   return response.data;
-  // },
+  getMissionResults: async (): Promise<ApiResponse<any>> => {
+    // /api/missions/results -> /api/missions/v2/{missionId}/result
+    // 백엔드 경로에 missionId가 필요하여 프론트엔드 호출부 수정 필요
+    const response = await api.get('/api/missions/v2/YOUR_MISSION_ID_HERE/result'); 
+    return response.data;
+  },
 };
 
 export default api;
