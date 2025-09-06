@@ -221,7 +221,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
                           {report.buildingName}
                         </h4>
                         <p className="text-sm text-gray-600">
-                          {report.streetAddress}, {report.neighborhood}
+                          {report.neighborhood}
                         </p>
                         <p className="text-sm text-gray-600 mt-2">
                           신고 내용: {report.report}

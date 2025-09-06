@@ -44,7 +44,7 @@ export default function NotificationBell({ currentUser }: NotificationBellProps)
       
       // WebSocket 연결
       webSocketService.connect(currentUser.id, (notification) => {
-        setNotifications(prev => [notification, ...prev]);
+        setNotifications(prev => [notification as any, ...prev]);
         setUnreadCount(prev => prev + 1);
       });
       

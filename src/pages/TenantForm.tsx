@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { tenantApi, authApi } from '../lib/api';
 import { Tenant, User } from '../types';
@@ -14,7 +13,6 @@ interface TenantFormProps {
 export default function TenantForm({ currentUser, onComplete, onGoHome }: TenantFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
   
   const {
     register,
@@ -28,8 +26,8 @@ export default function TenantForm({ currentUser, onComplete, onGoHome }: Tenant
       neighborhood: currentUser.neighborhood || '',
       city: currentUser.address || '서울',
       streetAddress: currentUser.address || '',
-      buildingType: '',
-      contractType: '',
+      buildingType: undefined as 'apartment' | 'officetel' | 'villa' | undefined,
+      contractType: undefined as 'monthly' | 'yearly' | undefined,
       depositKrw: 0,
       currentRentKrw: 0,
       maintenanceFee: 0,
@@ -49,14 +47,8 @@ export default function TenantForm({ currentUser, onComplete, onGoHome }: Tenant
     { value: 'yearly', label: '연세' }
   ];
 
-  const formatNumber = (value: string) => {
-    const number = value.replace(/[^0-9]/g, '');
-    if (!number) return '';
-    return parseInt(number).toLocaleString();
-  };
 
   const handleNumberChange = (field: string, value: string) => {
-    const formatted = formatNumber(value);
     const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0;
     setValue(field as keyof Tenant, numericValue as any);
   };
@@ -72,7 +64,7 @@ export default function TenantForm({ currentUser, onComplete, onGoHome }: Tenant
            values.consentYesNo;
   };
 
-  const onSubmit = async (data: Tenant) => {
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     setError('');
 

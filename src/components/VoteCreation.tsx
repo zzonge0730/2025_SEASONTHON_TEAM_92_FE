@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { User } from '../types';
@@ -21,7 +21,7 @@ export default function VoteCreation({ currentUser, onClose, onVoteCreated }: Vo
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [options, setOptions] = useState<string[]>(['', '']);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<VoteFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<VoteFormData>({
     defaultValues: {
       isAnonymous: false,
       deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16) // 7일 후

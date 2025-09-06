@@ -1,4 +1,6 @@
+// @ts-ignore - sockjs-client doesn't have type definitions
 import SockJS from 'sockjs-client';
+// @ts-ignore - stomjs doesn't have type definitions
 import { Client } from 'stompjs';
 
 interface NotificationMessage {
@@ -33,7 +35,7 @@ class WebSocketService {
         this.reconnectAttempts = 0;
 
         // 개별 알림 구독
-        this.stompClient?.subscribe(`/user/${userId}/queue/notifications`, (message) => {
+        this.stompClient?.subscribe(`/user/${userId}/queue/notifications`, (message: any) => {
           try {
             const notification = JSON.parse(message.body);
             console.log('🔔 실시간 알림 수신:', notification);
@@ -44,7 +46,7 @@ class WebSocketService {
         });
 
         // 전체 알림 구독
-        this.stompClient?.subscribe('/topic/notifications', (message) => {
+        this.stompClient?.subscribe('/topic/notifications', (message: any) => {
           try {
             const notification = JSON.parse(message.body);
             console.log('📢 전체 알림 수신:', notification);
@@ -54,7 +56,7 @@ class WebSocketService {
           }
         });
 
-      }, (error) => {
+      }, (error: any) => {
         console.error('WebSocket 연결 오류:', error);
         this.isConnected = false;
         this.handleReconnect(userId, onNotification);

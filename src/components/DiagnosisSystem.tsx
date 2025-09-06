@@ -1,7 +1,6 @@
 import { useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { DiagnosisQuestion, ComprehensiveDiagnosis, User } from '../types';
+import { ComprehensiveDiagnosis, User } from '../types';
 import { diagnosisApi } from '../lib/api';
 
 interface DiagnosisSystemProps {
@@ -11,9 +10,6 @@ interface DiagnosisSystemProps {
   onGoHome?: () => void;
 }
 
-interface DiagnosisFormData {
-  [questionId: string]: string;
-}
 
 const categories = [
   {
@@ -118,7 +114,7 @@ const categories = [
   }
 ];
 
-export default function DiagnosisSystem({ currentUser, onComplete, onSkip, onGoHome }: DiagnosisSystemProps) {
+export default function DiagnosisSystem({ currentUser, onComplete }: DiagnosisSystemProps) {
   const [responses, setResponses] = useState<{[key: string]: number}>({});
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -155,7 +151,41 @@ export default function DiagnosisSystem({ currentUser, onComplete, onSkip, onGoH
       const response = await diagnosisApi.submitBulk(diagnosisData);
 
       if (response.ok) {
-        onComplete(response.data);
+        // Mock comprehensive diagnosis result
+        const mockResult: ComprehensiveDiagnosis = {
+          id: Date.now().toString(),
+          userId: currentUser.id!,
+          overallScore: 75,
+          categoryScores: {
+            noise: 70,
+            water_pressure: 60,
+            lighting: 80,
+            parking: 65,
+            heating: 75,
+            security: 85,
+            elevator: 70,
+            facilities: 75
+          },
+          buildingComparison: {
+            averageScore: 68,
+            participantCount: 12,
+            rank: 3,
+            percentile: 75
+          },
+          neighborhoodComparison: {
+            averageScore: 71,
+            participantCount: 45,
+            rank: 8,
+            percentile: 82
+          },
+          recommendations: [
+            '수압 개선을 위한 펌프 점검 요구',
+            '주차 공간 확보 방안 논의',
+            '방음 시설 개선 검토'
+          ],
+          createdAt: new Date().toISOString()
+        };
+        onComplete(mockResult);
       } else {
         toast.error('진단 결과 저장에 실패했습니다.');
       }

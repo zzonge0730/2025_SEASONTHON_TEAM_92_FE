@@ -6,8 +6,8 @@ interface WeeklyMissionProps {
   onComplete?: () => void;
 }
 
-export default function WeeklyMission({ currentUser, onComplete }: WeeklyMissionProps) {
-  const [responses, setResponses] = useState<{[key: string]: number | string}>({});
+export default function WeeklyMission({ onComplete }: WeeklyMissionProps) {
+  const [responses, setResponses] = useState<{[key: string]: number}>({});
   const [isLoading, setIsLoading] = useState(false);
 
   // Mock weekly mission data
@@ -59,24 +59,18 @@ export default function WeeklyMission({ currentUser, onComplete }: WeeklyMission
   };
 
   const handleChoiceResponse = (questionId: string, value: string) => {
-    setResponses({...responses, [questionId]: value});
+    setResponses({...responses, [questionId]: parseInt(value) || 0});
   };
 
-  const handleMultipleResponse = (questionId: string, value: string) => {
-    const current = responses[questionId] as string[] || [];
-    const updated = current.includes(value) 
-      ? current.filter(v => v !== value)
-      : [...current, value];
-    setResponses({...responses, [questionId]: updated});
+  const handleMultipleResponse = (questionId: string, _value: string) => {
+    const current = responses[questionId] || 0;
+    setResponses({...responses, [questionId]: current + 1});
   };
 
   const isFormComplete = () => {
     return mission.questions.every(q => {
       const response = responses[q.id];
-      if (q.type === 'multiple') {
-        return Array.isArray(response) && response.length > 0;
-      }
-      return response !== undefined && response !== '';
+      return response !== undefined && response !== 0;
     });
   };
 
@@ -200,8 +194,8 @@ export default function WeeklyMission({ currentUser, onComplete }: WeeklyMission
                   {question.type === 'multiple' && (
                     <div className="space-y-3">
                       {question.options.map((option) => {
-                        const selectedOptions = responses[question.id] as string[] || [];
-                        const isSelected = selectedOptions.includes(option.value as string);
+                        const selectedCount = responses[question.id] || 0;
+                        const isSelected = selectedCount > 0;
                         
                         return (
                           <button

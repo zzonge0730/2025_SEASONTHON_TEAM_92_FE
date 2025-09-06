@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { User, Group, ComprehensiveDiagnosis } from '../types';
 import { groupApi } from '../lib/api';
-import { formatCurrency } from '../utils/formatting';
 import DiagnosisSystem from '../components/DiagnosisSystem';
 import DiagnosisResult from '../components/DiagnosisResult';
 import WeeklyMission from '../components/WeeklyMission';
 import ReportGenerator from '../components/ReportGenerator';
-import InfoCardDisplay from '../components/InfoCardDisplay';
 
 interface DashboardProps {
   currentUser: User;
@@ -16,12 +13,6 @@ interface DashboardProps {
 export default function Dashboard({ currentUser }: DashboardProps) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalGroups: 0,
-    myGroups: 0,
-    totalRent: 0,
-    avgRent: 0
-  });
 
   // 새로운 상태들
   const [diagnosisResult, setDiagnosisResult] = useState<ComprehensiveDiagnosis | null>(null);
@@ -50,15 +41,6 @@ export default function Dashboard({ currentUser }: DashboardProps) {
       ];
 
       setGroups(allGroups);
-      
-      // Calculate stats
-      const totalRent = allGroups.reduce((sum, group) => sum + group.avgRentKrw, 0);
-      setStats({
-        totalGroups: allGroups.length,
-        myGroups: allGroups.length, // For now, assume user is in all groups
-        totalRent,
-        avgRent: allGroups.length > 0 ? totalRent / allGroups.length : 0
-      });
     } catch (error) {
       console.error('Error fetching user data:', error);
     } finally {

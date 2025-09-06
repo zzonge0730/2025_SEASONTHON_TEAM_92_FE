@@ -3,7 +3,6 @@ import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { User } from '../types';
 import { locationApi } from '../lib/api';
-import OnboardingProgress from './OnboardingProgress';
 
 interface LocationVerifierProps {
   currentUser: User;

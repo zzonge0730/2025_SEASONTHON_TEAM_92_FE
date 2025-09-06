@@ -10,14 +10,13 @@ interface AuthFormProps {
   onClose?: () => void;
 }
 
-const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin, onClose }) => {
+const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin }) => {
   const [isLoginView, setIsLoginView] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm();
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
-  const password = watch('password');
 
   const onSubmit = async (data: any) => {
     setIsLoading(true);
@@ -106,7 +105,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin, onClos
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {errors.email && (
-            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+            <p className="text-red-500 text-xs mt-1">{errors.email.message as string}</p>
           )}
         </div>
 
@@ -129,7 +128,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin, onClos
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           {errors.password && (
-            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+            <p className="text-red-500 text-xs mt-1">{errors.password.message as string}</p>
           )}
         </div>
 
@@ -153,7 +152,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ onAuthSuccess, onAdminLogin, onClos
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {errors.nickname && (
-              <p className="text-red-500 text-xs mt-1">{errors.nickname.message}</p>
+              <p className="text-red-500 text-xs mt-1">{errors.nickname.message as string}</p>
             )}
           </div>
         )}
