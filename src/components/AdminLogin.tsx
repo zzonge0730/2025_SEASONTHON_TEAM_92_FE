@@ -35,12 +35,17 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onAdminLogin, onBack }) => {
       const result = await response.json();
 
       if (result.ok) {
+        // JWT 토큰을 localStorage에 저장
+        if (result.data.token) {
+          localStorage.setItem('jwtToken', result.data.token);
+        }
+        
         const admin: User = {
-          id: result.data.id,
-          email: result.data.email || '',
-          nickname: result.data.nickname,
+          id: result.data.user.id,
+          email: result.data.user.email || '',
+          nickname: result.data.user.nickname,
           role: 'admin',
-          address: result.data.address || '',
+          address: result.data.user.address || '',
         };
         
         onAdminLogin(admin);

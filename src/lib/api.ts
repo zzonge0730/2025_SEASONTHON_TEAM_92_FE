@@ -189,3 +189,14 @@ export const infoCardApi = {
     return response.data;
   },
 };
+
+export const missionApi = {
+  getCurrentMission: async (): Promise<ApiResponse<any>> => {
+    const response = await api.get('/api/missions/current');
+    return response.data;
+  },
+  participateInMission: async (answers: any): Promise<ApiResponse<any>> => {
+    const response = await api.post('/api/missions/participate', answers);
+    return response.data;
+  },
+};
