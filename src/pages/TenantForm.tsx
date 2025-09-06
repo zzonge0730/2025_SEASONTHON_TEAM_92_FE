@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { tenantApi, authApi } from '../lib/api';
 import { Tenant, User } from '../types';
-import OnboardingProgress from '../components/OnboardingProgress';
 
 interface TenantFormProps {
   currentUser: User;
@@ -14,391 +13,373 @@ interface TenantFormProps {
 
 export default function TenantForm({ currentUser, onComplete, onGoHome }: TenantFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   
   const {
     register,
     handleSubmit,
     formState: { errors },
-    watch
+    watch,
+    setValue
   } = useForm<Tenant>({
     defaultValues: {
       buildingName: currentUser.buildingName || '',
       neighborhood: currentUser.neighborhood || '',
       city: currentUser.address || '서울',
-      streetAddress: currentUser.address || ''
+      streetAddress: currentUser.address || '',
+      buildingType: '',
+      contractType: '',
+      depositKrw: 0,
+      currentRentKrw: 0,
+      maintenanceFee: 0,
+      leaseEndYyyyMm: '',
+      consentYesNo: false
     }
   });
 
-  const consentValue = watch('consentYesNo');
+  const buildingTypes = [
+    { value: 'apartment', label: '아파트' },
+    { value: 'officetel', label: '오피스텔' },
+    { value: 'villa', label: '빌라/연립' }
+  ];
+
+  const contractTypes = [
+    { value: 'monthly', label: '월세' },
+    { value: 'yearly', label: '연세' }
+  ];
+
+  const formatNumber = (value: string) => {
+    const number = value.replace(/[^0-9]/g, '');
+    if (!number) return '';
+    return parseInt(number).toLocaleString();
+  };
+
+  const handleNumberChange = (field: string, value: string) => {
+    const formatted = formatNumber(value);
+    const numericValue = parseInt(value.replace(/[^0-9]/g, '')) || 0;
+    setValue(field as keyof Tenant, numericValue as any);
+  };
+
+  const isFormValid = () => {
+    const values = watch();
+    return values.buildingName && 
+           values.buildingType && 
+           values.contractType && 
+           values.depositKrw && 
+           values.currentRentKrw &&
+           values.leaseEndYyyyMm &&
+           values.consentYesNo;
+  };
 
   const onSubmit = async (data: Tenant) => {
-    if (!data.consentYesNo) {
-      toast.error('정보 제공에 동의해주세요');
-      return;
-    }
-
-    // Add userId to the tenant data
-    const tenantData = {
-      ...data,
-      userId: currentUser.id
-    };
-
     setIsSubmitting(true);
+    setError('');
+
     try {
+      // Transform data to match backend expectations
+      const tenantData = {
+        ...data,
+        userId: currentUser.id,
+        // Ensure numeric values are properly converted
+        depositKrw: Number(data.depositKrw) || 0,
+        currentRentKrw: Number(data.currentRentKrw) || 0,
+        maintenanceFee: data.maintenanceFee ? Number(data.maintenanceFee) : undefined,
+        // Ensure consent is boolean
+        consentYesNo: Boolean(data.consentYesNo)
+      };
+
+      console.log('Sending tenant data:', tenantData);
       const response = await tenantApi.createTenant(tenantData);
       if (response.ok) {
-        toast.success('정보가 성공적으로 제출되었습니다!');
-        
         // Update user profile completion status
         const updatedUser = {
           ...currentUser,
-          profileCompleted: true
+          profileCompleted: true,
+          buildingName: data.buildingName,
+          address: data.streetAddress,
+          neighborhood: data.neighborhood
         };
-        
-        try {
-          // Update user in backend
-          const response = await authApi.updateUser(updatedUser);
-          if (response.ok) {
-            if (onComplete) {
-              onComplete(response.data);
-            } else {
-              navigate('/');
-            }
-          } else {
-            // If backend update fails, still update locally
-            if (onComplete) {
-              onComplete(updatedUser);
-            } else {
-              navigate('/');
-            }
-          }
-        } catch (error) {
-          console.error('Error updating user:', error);
-          // If backend update fails, still update locally
-          if (onComplete) {
-            onComplete(updatedUser);
-          } else {
-            navigate('/');
-          }
+
+        const userResponse = await authApi.updateUser(updatedUser);
+        if (userResponse.ok) {
+          onComplete?.(userResponse.data);
+        } else {
+          onComplete?.(updatedUser);
         }
+        
+        toast.success('프로필이 성공적으로 저장되었습니다!');
       } else {
-        toast.error(response.message || '정보 제출에 실패했습니다');
+        setError(response.message || '프로필 저장에 실패했습니다.');
       }
-    } catch (error) {
-      console.error('Error submitting tenant data:', error);
-      toast.error('정보 제출에 실패했습니다. 다시 시도해주세요.');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || '프로필 저장 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      console.error('Tenant form error:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow rounded-lg p-6">
-        <OnboardingProgress 
-          currentStep={2} 
-          totalSteps={3} 
-          stepNames={['위치 인증', '프로필 입력', '진단 시작']} 
-        />
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            STEP 1-3: 거주 프로필 입력
-          </h1>
-          <p className="text-sm text-gray-600">
-            리포트 생성을 위한 핵심 정보를 입력해주세요
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center py-12 px-4">
+      <div className="max-w-lg w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-800 cursor-pointer mb-2">월세 공동협약</h1>
+          <div className="w-16 h-1 bg-gray-700 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            거주 프로필 입력
+          </h2>
+          <p className="text-gray-600 text-sm leading-relaxed">
+            정확한 분석을 위한 거주 정보를 입력해주세요
           </p>
-          {currentUser.buildingName && (
-            <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
-              <p className="text-sm text-green-800">
-                ✓ 위치 인증이 완료되어 건물명과 주소가 자동으로 입력되었습니다. 필요시 수정하실 수 있습니다.
-              </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* 거주지 주소 섹션 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                거주지 주소
+              </label>
+              <div className="space-y-3">
+                <div>
+                  <label htmlFor="neighborhood" className="block text-xs text-gray-500 mb-1">
+                    구/동 (자동 입력됨)
+                  </label>
+                  <input
+                    {...register('neighborhood', { required: '동네 정보가 필요합니다.' })}
+                    type="text"
+                    disabled
+                    className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-500 rounded-lg bg-gray-100 text-sm"
+                    value={currentUser.neighborhood || '강남구 역삼동'}
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="streetAddress" className="block text-xs text-gray-500 mb-1">
+                    세부 주소 *
+                  </label>
+                  <input
+                    {...register('streetAddress', { required: '세부 주소를 입력해주세요.' })}
+                    type="text"
+                    className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors duration-200"
+                    placeholder="예: 역삼로 123"
+                  />
+                  {errors.streetAddress && <p className="text-red-500 text-xs mt-1">{errors.streetAddress.message}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="buildingName" className="block text-xs text-gray-500 mb-1">
+                    건물명 *
+                  </label>
+                  <input
+                    {...register('buildingName', { required: '건물명을 입력해주세요.' })}
+                    type="text"
+                    className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors duration-200"
+                    placeholder="예: 역삼타워"
+                  />
+                  {errors.buildingName && <p className="text-red-500 text-xs mt-1">{errors.buildingName.message}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* 건물 유형 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                건물 유형 *
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {buildingTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setValue('buildingType', type.value as any)}
+                    className={`px-3 py-3 text-sm font-medium rounded-lg border-2 transition-colors whitespace-nowrap cursor-pointer ${
+                      watch('buildingType') === type.value
+                        ? 'border-gray-500 bg-gray-50 text-gray-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+              {errors.buildingType && <p className="text-red-500 text-xs mt-1">건물 유형을 선택해주세요.</p>}
+            </div>
+
+            {/* 계약 유형 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                계약 유형 *
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {contractTypes.map((type) => (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setValue('contractType', type.value as any)}
+                    className={`px-4 py-3 text-sm font-medium rounded-lg border-2 transition-colors whitespace-nowrap cursor-pointer ${
+                      watch('contractType') === type.value
+                        ? 'border-gray-500 bg-gray-50 text-gray-700'
+                        : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                    }`}
+                  >
+                    {type.label}
+                  </button>
+                ))}
+              </div>
+              {errors.contractType && <p className="text-red-500 text-xs mt-1">계약 유형을 선택해주세요.</p>}
+            </div>
+
+            {/* 계약 조건 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                계약 조건
+              </label>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="depositKrw" className="block text-xs text-gray-500 mb-1">
+                    보증금 *
+                  </label>
+                  <div className="relative">
+                    <input
+                      {...register('depositKrw', { required: '보증금을 입력해주세요.' })}
+                      type="text"
+                      className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors duration-200"
+                      placeholder="0"
+                      onChange={(e) => handleNumberChange('depositKrw', e.target.value)}
+                    />
+                    <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      만원
+                    </span>
+                  </div>
+                  {errors.depositKrw && <p className="text-red-500 text-xs mt-1">{errors.depositKrw.message}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="currentRentKrw" className="block text-xs text-gray-500 mb-1">
+                    {watch('contractType') === 'monthly' ? '월세' : '연세'} *
+                  </label>
+                  <div className="relative">
+                    <input
+                      {...register('currentRentKrw', { required: '임대료를 입력해주세요.' })}
+                      type="text"
+                      className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors duration-200"
+                      placeholder="0"
+                      onChange={(e) => handleNumberChange('currentRentKrw', e.target.value)}
+                    />
+                    <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      만원
+                    </span>
+                  </div>
+                  {errors.currentRentKrw && <p className="text-red-500 text-xs mt-1">{errors.currentRentKrw.message}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="maintenanceFee" className="block text-xs text-gray-500 mb-1">
+                    관리비 (선택)
+                  </label>
+                  <div className="relative">
+                    <input
+                      {...register('maintenanceFee')}
+                      type="text"
+                      className="appearance-none relative block w-full px-4 py-3 pr-12 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors duration-200"
+                      placeholder="0"
+                      onChange={(e) => handleNumberChange('maintenanceFee', e.target.value)}
+                    />
+                    <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      만원
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="leaseEndYyyyMm" className="block text-xs text-gray-500 mb-1">
+                    계약 만료일 *
+                  </label>
+                  <input
+                    {...register('leaseEndYyyyMm', { 
+                      required: '계약 만료일을 입력해주세요.',
+                      pattern: {
+                        value: /^\d{4}-\d{2}$/,
+                        message: 'YYYY-MM 형식으로 입력해주세요 (예: 2025-12)'
+                      }
+                    })}
+                    type="text"
+                    className="appearance-none relative block w-full px-4 py-3 border border-gray-200 placeholder-gray-400 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent text-sm bg-gray-50 focus:bg-white transition-colors duration-200"
+                    placeholder="2025-12"
+                  />
+                  {errors.leaseEndYyyyMm && <p className="text-red-500 text-xs mt-1">{errors.leaseEndYyyyMm.message}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* 동의 섹션 */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                개인정보 처리 동의 *
+              </label>
+              <div className="flex items-start space-x-3">
+                <input
+                  {...register('consentYesNo', { required: '개인정보 처리에 동의해주세요.' })}
+                  type="checkbox"
+                  className="mt-1 h-4 w-4 text-gray-600 focus:ring-gray-500 border-gray-300 rounded"
+                />
+                <div className="text-sm text-gray-600">
+                  <p>입력하신 정보는 임대료 협상 분석을 위해서만 사용되며, 관련 법령에 따라 안전하게 보호됩니다.</p>
+                  <p className="mt-1 text-xs text-gray-500">동의하지 않으시면 서비스를 이용하실 수 없습니다.</p>
+                </div>
+              </div>
+              {errors.consentYesNo && <p className="text-red-500 text-xs mt-1">{errors.consentYesNo.message}</p>}
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-400 rounded-lg p-4">
+                <p className="text-red-600 text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting || !isFormValid()}
+                className="group relative w-full flex justify-center py-4 px-6 border border-transparent text-sm font-semibold rounded-xl text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer transition-all duration-200"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    저장 중...
+                  </div>
+                ) : (
+                  '프로필 저장 완료'
+                )}
+              </button>
+            </div>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="flex items-center text-xs text-gray-500">
+              <div className="w-4 h-4 flex items-center justify-center mr-2">
+                <i className="ri-shield-check-line"></i>
+              </div>
+              <p>입력된 정보는 분석을 위해서만 사용되며 안전하게 보호됩니다.</p>
+            </div>
+          </div>
+
+          {onGoHome && (
+            <div className="mt-4 text-center">
+              <button 
+                type="button" 
+                onClick={onGoHome}
+                className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
+              >
+                <i className="ri-home-line mr-1"></i>
+                홈으로 돌아가기
+              </button>
             </div>
           )}
         </div>
-        
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Building Information */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900">건물 정보</h2>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                건물명 *
-                {currentUser.buildingName && (
-                  <span className="ml-2 text-xs text-green-600">✓ 위치 인증으로 자동 입력됨</span>
-                )}
-              </label>
-              <input
-                {...register('buildingName', { required: '건물명을 입력해주세요' })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="예: 행복아파트"
-              />
-              {errors.buildingName && (
-                <p className="mt-1 text-sm text-red-600">{errors.buildingName.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                건물 유형 *
-              </label>
-              <select
-                {...register('buildingType', { required: '건물 유형을 선택해주세요' })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">건물 유형을 선택하세요</option>
-                <option value="apartment">아파트</option>
-                <option value="officetel">오피스텔</option>
-                <option value="villa">빌라</option>
-              </select>
-              {errors.buildingType && (
-                <p className="mt-1 text-sm text-red-600">{errors.buildingType.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                도로명 주소 *
-                {currentUser.address && (
-                  <span className="ml-2 text-xs text-green-600">✓ 위치 인증으로 자동 입력됨</span>
-                )}
-              </label>
-              <input
-                {...register('streetAddress', { required: '도로명 주소를 입력해주세요' })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="예: 울산 중구 성남동 123-45"
-              />
-              {errors.streetAddress && (
-                <p className="mt-1 text-sm text-red-600">{errors.streetAddress.message}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  동/읍/면 *
-                  {currentUser.neighborhood && (
-                    <span className="ml-2 text-xs text-green-600">✓ 자동 입력됨</span>
-                  )}
-                </label>
-                <input
-                  {...register('neighborhood', { required: '동/읍/면을 입력해주세요' })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="예: 성남동"
-                />
-                {errors.neighborhood && (
-                  <p className="mt-1 text-sm text-red-600">{errors.neighborhood.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  시/구 *
-                  {currentUser.address && (
-                    <span className="ml-2 text-xs text-green-600">✓ 자동 입력됨</span>
-                  )}
-                </label>
-                <input
-                  {...register('city', { required: '시/구를 입력해주세요' })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="예: 울산 중구"
-                />
-                {errors.city && (
-                  <p className="mt-1 text-sm text-red-600">{errors.city.message}</p>
-                )}
-              </div>
-            </div>
-
-          </div>
-
-          {/* 계약 정보 */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900">계약 정보</h2>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                계약 유형 *
-              </label>
-              <select
-                {...register('contractType', { required: '계약 유형을 선택해주세요' })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              >
-                <option value="">계약 유형을 선택하세요</option>
-                <option value="monthly">월세</option>
-                <option value="yearly">전세</option>
-              </select>
-              {errors.contractType && (
-                <p className="mt-1 text-sm text-red-600">{errors.contractType.message}</p>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  현재 월세 (원) *
-                </label>
-                <input
-                  type="number"
-                  {...register('currentRentKrw', { 
-                    required: '현재 월세를 입력해주세요',
-                    min: { value: 1, message: '월세는 0보다 커야 합니다' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="750000"
-                />
-                {errors.currentRentKrw && (
-                  <p className="mt-1 text-sm text-red-600">{errors.currentRentKrw.message}</p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  보증금 (원) *
-                </label>
-                <input
-                  type="number"
-                  {...register('depositKrw', { 
-                    required: '보증금을 입력해주세요',
-                    min: { value: 1, message: '보증금은 0보다 커야 합니다' }
-                  })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="5000000"
-                />
-                {errors.depositKrw && (
-                  <p className="mt-1 text-sm text-red-600">{errors.depositKrw.message}</p>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                관리비 (원) - 선택사항
-              </label>
-              <input
-                type="number"
-                {...register('maintenanceFee', { 
-                  min: { value: 0, message: '관리비는 0 이상이어야 합니다' }
-                })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="100000"
-              />
-              {errors.maintenanceFee && (
-                <p className="mt-1 text-sm text-red-600">{errors.maintenanceFee.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                임대 종료일 *
-              </label>
-              <input
-                type="text"
-                {...register('leaseEndYyyyMm', { 
-                  required: '임대 종료일을 입력해주세요',
-                  pattern: {
-                    value: /^\d{4}-\d{2}$/,
-                    message: '날짜는 YYYY-MM 형식으로 입력해주세요'
-                  }
-                })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="2025-12"
-              />
-              {errors.leaseEndYyyyMm && (
-                <p className="mt-1 text-sm text-red-600">{errors.leaseEndYyyyMm.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                최근 인상 통지율 % (선택사항)
-              </label>
-              <input
-                type="number"
-                {...register('increaseNoticePctOptional', { 
-                  min: { value: 0, message: '비율은 0 이상이어야 합니다' },
-                  max: { value: 100, message: '비율은 100을 초과할 수 없습니다' }
-                })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="5"
-              />
-              {errors.increaseNoticePctOptional && (
-                <p className="mt-1 text-sm text-red-600">{errors.increaseNoticePctOptional.message}</p>
-              )}
-            </div>
-          </div>
-
-          {/* 추가 정보 */}
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-gray-900">추가 정보</h2>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                집주인 이메일 (선택사항)
-              </label>
-              <input
-                type="email"
-                {...register('landlordEmailOptional')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="owner@example.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                불만사항 (선택사항)
-              </label>
-              <textarea
-                {...register('painPointsFreeText')}
-                rows={3}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                placeholder="예: 엘리베이터 고장, 통지 기간이 짧음"
-              />
-            </div>
-          </div>
-
-          {/* 동의 */}
-          <div className="space-y-4">
-            <div className="flex items-start">
-              <div className="flex items-center h-5">
-                <input
-                  type="checkbox"
-                  {...register('consentYesNo', { required: '동의가 필요합니다' })}
-                  className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                />
-              </div>
-              <div className="ml-3 text-sm">
-                <label className="font-medium text-gray-700">
-                  공동 협상을 위해 월세 정보 공유에 동의합니다 *
-                </label>
-                {errors.consentYesNo && (
-                  <p className="mt-1 text-sm text-red-600">{errors.consentYesNo.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-between">
-            {onGoHome && (
-              <button
-                type="button"
-                onClick={onGoHome}
-                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                🏠 홈으로 돌아가기
-              </button>
-            )}
-            
-            <button
-              type="submit"
-              disabled={isSubmitting || !consentValue}
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? '제출 중...' : '정보 제출'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

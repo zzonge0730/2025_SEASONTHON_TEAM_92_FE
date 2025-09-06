@@ -2,20 +2,16 @@ import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { User, Vote } from '../types';
 
-interface AnonymousReport {
+interface AnonymousComplaint {
   id: string;
   timestamp: string;
   buildingName: string;
-  streetAddress: string;
+  report: string;
   neighborhood: string;
   city: string;
-  currentRentKrw: number;
-  depositKrw: number;
-  leaseEndYyyyMm: string;
-  increaseNoticePctOptional?: number;
-  landlordEmailOptional?: string;
-  painPointsFreeText?: string;
-  consentYesNo: boolean;
+  verified: boolean;
+  verifiedBy?: string;
+  verifiedAt?: string;
 }
 
 interface AdminDashboardProps {
@@ -24,7 +20,7 @@ interface AdminDashboardProps {
 }
 
 export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps) {
-  const [reports, setReports] = useState<AnonymousReport[]>([]);
+  const [reports, setReports] = useState<AnonymousComplaint[]>([]);
   const [votes, setVotes] = useState<Vote[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,10 +31,29 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
   const fetchData = async () => {
     setLoading(true);
     try {
-      // 실제로는 API에서 데이터를 가져와야 함
-      // 여기서는 빈 배열로 초기화
-      setReports([]);
-      setVotes([]);
+      // 익명 신고 목록 가져오기
+      const reportsResponse = await fetch('http://localhost:8891/api/admin/reports', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+        }
+      });
+      
+      if (reportsResponse.ok) {
+        const reportsData = await reportsResponse.json();
+        setReports(reportsData.data || []);
+      }
+
+      // 투표 목록 가져오기
+      const votesResponse = await fetch('http://localhost:8891/api/admin/votes', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+        }
+      });
+      
+      if (votesResponse.ok) {
+        const votesData = await votesResponse.json();
+        setVotes(votesData.data || []);
+      }
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -47,10 +62,23 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
     }
   };
 
-  const handleVerifyReport = async () => {
+  const handleVerifyReport = async (reportId: string, verified: boolean) => {
     try {
-      // 실제로는 API 호출
-      toast.success('신고가 검증되었습니다.');
+      const response = await fetch(`http://localhost:8891/api/admin/reports/${reportId}/verify`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+        },
+        body: JSON.stringify({ verified })
+      });
+
+      if (response.ok) {
+        toast.success(verified ? '신고가 검증되었습니다.' : '신고 검증이 취소되었습니다.');
+        fetchData(); // 데이터 새로고침
+      } else {
+        toast.error('신고 검증에 실패했습니다.');
+      }
       fetchData();
     } catch (error) {
       console.error('Error verifying report:', error);
@@ -142,7 +170,7 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
                       검증된 신고
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      {reports.filter(r => r.consentYesNo).length}
+                      {reports.filter(r => r.verified).length}
                     </dd>
                   </dl>
                 </div>
@@ -195,22 +223,27 @@ export default function AdminDashboard({ admin, onLogout }: AdminDashboardProps)
                         <p className="text-sm text-gray-600">
                           {report.streetAddress}, {report.neighborhood}
                         </p>
-                        <p className="text-sm text-gray-500">
-                          월세: {report.currentRentKrw.toLocaleString()}원 / 
-                          보증금: {report.depositKrw.toLocaleString()}원
+                        <p className="text-sm text-gray-600 mt-2">
+                          신고 내용: {report.report}
                         </p>
-                        {report.painPointsFreeText && (
-                          <p className="text-sm text-gray-600 mt-2">
-                            문제점: {report.painPointsFreeText}
+                        {report.verified && (
+                          <p className="text-sm text-green-600 mt-1">
+                            ✅ 검증됨 ({report.verifiedBy} - {report.verifiedAt ? new Date(report.verifiedAt).toLocaleDateString('ko-KR') : ''})
                           </p>
                         )}
                       </div>
                       <div className="ml-4 flex space-x-2">
                         <button
-                          onClick={handleVerifyReport}
+                          onClick={() => handleVerifyReport(report.id, true)}
                           className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700"
                         >
                           검증
+                        </button>
+                        <button
+                          onClick={() => handleVerifyReport(report.id, false)}
+                          className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700"
+                        >
+                          거부
                         </button>
                       </div>
                     </div>

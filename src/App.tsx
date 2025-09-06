@@ -7,6 +7,7 @@ import GroupsPage from './pages/GroupsPage';
 import NotificationsPage from './pages/NotificationsPage';
 import ReportView from './pages/ReportView';
 import SharedReportView from './pages/SharedReportView';
+import HomePage from './pages/HomePage';
 import AuthForm from './components/AuthForm';
 import AdminLogin from './components/AdminLogin';
 import AdminDashboard from './components/AdminDashboard';
@@ -23,6 +24,7 @@ function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -59,12 +61,14 @@ function App() {
 
   const handleAuthSuccess = (user: User) => {
     setCurrentUser(user);
+    setShowLoginModal(false);
     localStorage.setItem('currentUser', JSON.stringify(user));
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     setShowAdminLogin(false);
+    setShowLoginModal(false);
     localStorage.removeItem('currentUser');
     localStorage.removeItem('jwtToken');
   };
@@ -83,6 +87,14 @@ function App() {
     setShowAdminLogin(false);
   };
 
+  const handleShowLogin = () => {
+    setShowLoginModal(true);
+  };
+
+  const handleCloseLogin = () => {
+    setShowLoginModal(false);
+  };
+
   const AppContent = () => {
     if (isLoading) {
       return <div className="min-h-screen flex items-center justify-center">...Loading...</div>;
@@ -97,7 +109,38 @@ function App() {
           />
         );
       }
-      return <AuthForm onAuthSuccess={handleAuthSuccess} onAdminLogin={handleAdminLogin} />;
+      
+      return (
+        <>
+          <HomePage onShowLogin={handleShowLogin} />
+          {showLoginModal && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={handleCloseLogin}
+            >
+              <div 
+                className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-900">로그인</h2>
+                  <button
+                    onClick={handleCloseLogin}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <i className="ri-close-line text-xl"></i>
+                  </button>
+                </div>
+                <AuthForm 
+                  onAuthSuccess={handleAuthSuccess} 
+                  onAdminLogin={handleAdminLogin}
+                  onClose={handleCloseLogin}
+                />
+              </div>
+            </div>
+          )}
+        </>
+      );
     }
 
     // 관리자는 온보딩 스킵
@@ -172,50 +215,68 @@ function App() {
 
     // ... other roles and main app layout
     return (
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm border-b">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <nav className="bg-white shadow-lg border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <Link to="/" className="text-xl font-bold text-gray-900">
-                  월세 공동협약 네트워크
+                <Link to="/" className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
+                    <i className="ri-home-heart-line text-white text-sm"></i>
+                  </div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    월세 공동협약 네트워크
+                  </h1>
                 </Link>
               </div>
               <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-700">안녕하세요, {currentUser.nickname}님</span>
+                <div className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-gray-100">
+                  <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm font-bold">
+                      {currentUser.nickname?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-800">
+                    {currentUser.nickname}님
+                  </span>
+                </div>
                 
                 <Link
                   to="/dashboard"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                 >
+                  <i className="ri-dashboard-line mr-2"></i>
                   대시보드
                 </Link>
                 
                 <Link
                   to="/groups"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                 >
+                  <i className="ri-group-line mr-2"></i>
                   그룹 보기
                 </Link>
                 
                 <Link
                   to="/reports"
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                 >
+                  <i className="ri-file-warning-line mr-2"></i>
                   익명 신고
                 </Link>
                 
                 <button
                   onClick={handleLogout}
-                  className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  className="text-gray-600 hover:text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
                 >
+                  <i className="ri-logout-circle-line mr-2"></i>
                   로그아웃
                 </button>
               </div>
             </div>
           </div>
         </nav>
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
           <Routes>
             <Route path="/" element={<Dashboard currentUser={currentUser} />} />
             <Route path="/dashboard" element={<Dashboard currentUser={currentUser} />} />

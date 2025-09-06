@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { DiagnosisQuestion, ComprehensiveDiagnosis, User } from '../types';
@@ -15,393 +15,175 @@ interface DiagnosisFormData {
   [questionId: string]: string;
 }
 
-const DIAGNOSIS_QUESTIONS: DiagnosisQuestion[] = [
-  // 소음 관련
+const categories = [
   {
-    id: 'noise_1',
-    category: 'noise',
-    question: '옆집 생활 소음(대화, TV 소리)이 들리는 편인가요?',
-    options: ['전혀 안 들림', '가끔 들림', '자주 들림', '매우 자주 들림'],
-    weight: 3
+    id: 'noise',
+    title: '소음',
+    icon: 'ri-volume-down-line',
+    description: '이웃 소음과 외부 소음 정도',
+    questions: [
+      { id: 'neighbor_noise', text: '옆집/윗집 생활소음이 어느 정도인가요?', scale: '매우 조용함~매우 시끄러움' },
+      { id: 'outside_noise', text: '외부 소음(교통, 공사 등)은 어떤가요?', scale: '전혀 안 들림~매우 시끄러움' }
+    ]
   },
   {
-    id: 'noise_2',
-    category: 'noise',
-    question: '층간소음으로 불편을 겪은 적이 있나요?',
-    options: ['없음', '1-2번', '3-5번', '매우 자주'],
-    weight: 4
+    id: 'water',
+    title: '수압',
+    icon: 'ri-drop-line',
+    description: '물의 압력과 온수 공급',
+    questions: [
+      { id: 'water_pressure', text: '샤워할 때 수압은 어떤가요?', scale: '매우 약함~매우 강함' },
+      { id: 'hot_water', text: '온수가 나오는 속도는 어떤가요?', scale: '매우 늦음~매우 빠름' }
+    ]
   },
   {
-    id: 'noise_3',
-    category: 'noise',
-    question: '외부 소음(도로, 공사 등)이 들리는 편인가요?',
-    options: ['전혀 안 들림', '가끔 들림', '자주 들림', '매우 자주 들림'],
-    weight: 2
-  },
-
-  // 수압 관련
-  {
-    id: 'water_1',
-    category: 'water_pressure',
-    question: '물압이 충분한 편인가요?',
-    options: ['매우 충분함', '충분함', '부족함', '매우 부족함'],
-    weight: 3
+    id: 'lighting',
+    title: '채광',
+    icon: 'ri-sun-line',
+    description: '자연광과 햇빛 유입',
+    questions: [
+      { id: 'natural_light', text: '낮 시간 자연광은 충분한가요?', scale: '매우 어두움~매우 밝음' },
+      { id: 'sunlight_hours', text: '하루 중 햇빛이 드는 시간은?', scale: '거의 없음~하루종일' }
+    ]
   },
   {
-    id: 'water_2',
-    category: 'water_pressure',
-    question: '물 온도가 일정하게 유지되나요?',
-    options: ['매우 일정함', '대체로 일정함', '가끔 변함', '자주 변함'],
-    weight: 2
-  },
-
-  // 채광 관련
-  {
-    id: 'lighting_1',
-    category: 'lighting',
-    question: '자연 채광이 충분한 편인가요?',
-    options: ['매우 충분함', '충분함', '부족함', '매우 부족함'],
-    weight: 3
+    id: 'parking',
+    title: '주차',
+    icon: 'ri-parking-line',
+    description: '주차 공간 확보와 접근성',
+    questions: [
+      { id: 'parking_availability', text: '주차공간 확보는 어떤가요?', scale: '매우 어려움~매우 쉬움' },
+      { id: 'parking_distance', text: '집까지의 거리는 어떤가요?', scale: '매우 멀음~매우 가까움' }
+    ]
   },
   {
-    id: 'lighting_2',
-    category: 'lighting',
-    question: '실내 조명이 충분한가요?',
-    options: ['매우 충분함', '충분함', '부족함', '매우 부족함'],
-    weight: 2
-  },
-
-  // 주차 관련
-  {
-    id: 'parking_1',
-    category: 'parking',
-    question: '주차 공간이 충분한가요?',
-    options: ['매우 충분함', '충분함', '부족함', '매우 부족함'],
-    weight: 3
+    id: 'heating',
+    title: '난방',
+    icon: 'ri-fire-line',
+    description: '난방 효율과 비용',
+    questions: [
+      { id: 'heating_efficiency', text: '겨울철 난방 효율은 어떤가요?', scale: '매우 나쁨~매우 좋음' },
+      { id: 'heating_cost', text: '난방비 부담은 어떤가요?', scale: '매우 부담~전혀 부담없음' }
+    ]
   },
   {
-    id: 'parking_2',
-    category: 'parking',
-    question: '주차비가 합리적인가요?',
-    options: ['매우 합리적', '합리적', '비쌈', '매우 비쌈'],
-    weight: 2
-  },
-
-  // 난방 관련
-  {
-    id: 'heating_1',
-    category: 'heating',
-    question: '난방이 잘 되는 편인가요?',
-    options: ['매우 잘 됨', '잘 됨', '부족함', '매우 부족함'],
-    weight: 3
+    id: 'ventilation',
+    title: '환기',
+    icon: 'ri-windy-line',
+    description: '공기 순환과 습도 조절',
+    questions: [
+      { id: 'air_circulation', text: '실내 공기순환은 어떤가요?', scale: '매우 나쁨~매우 좋음' },
+      { id: 'humidity_control', text: '습도 조절은 어떤가요?', scale: '매우 어려움~매우 쉬움' }
+    ]
   },
   {
-    id: 'heating_2',
-    category: 'heating',
-    question: '난방비가 합리적인가요?',
-    options: ['매우 합리적', '합리적', '비쌈', '매우 비쌈'],
-    weight: 2
-  },
-
-  // 보안 관련
-  {
-    id: 'security_1',
-    category: 'security',
-    question: '건물 보안이 안전한 편인가요?',
-    options: ['매우 안전함', '안전함', '불안함', '매우 불안함'],
-    weight: 4
+    id: 'security',
+    title: '보안',
+    icon: 'ri-shield-line',
+    description: '건물 보안과 안전감',
+    questions: [
+      { id: 'building_security', text: '건물 보안시설은 어떤가요?', scale: '매우 미흡~매우 완벽' },
+      { id: 'safety_feeling', text: '밤시간 안전함은 어떤가요?', scale: '매우 불안~매우 안전' }
+    ]
   },
   {
-    id: 'security_2',
-    category: 'security',
-    question: '출입문 보안이 잘 되어 있나요?',
-    options: ['매우 잘 됨', '잘 됨', '부족함', '매우 부족함'],
-    weight: 3
+    id: 'maintenance',
+    title: '관리',
+    icon: 'ri-tools-line',
+    description: '건물 관리와 수리 대응',
+    questions: [
+      { id: 'building_maintenance', text: '건물 관리상태는 어떤가요?', scale: '매우 나쁨~매우 좋음' },
+      { id: 'repair_response', text: '수리 요청 시 대응속도는?', scale: '매우 늦음~매우 빠름' }
+    ]
   },
-
-  // 엘리베이터 관련
   {
-    id: 'elevator_1',
-    category: 'elevator',
-    question: '엘리베이터가 잘 작동하나요?',
-    options: ['매우 잘 됨', '잘 됨', '가끔 고장', '자주 고장'],
-    weight: 2
+    id: 'convenience',
+    title: '편의성',
+    icon: 'ri-store-line',
+    description: '주변 시설과 교통',
+    questions: [
+      { id: 'nearby_facilities', text: '주변 편의시설은 어떤가요?', scale: '매우 불편~매우 편리' },
+      { id: 'public_transport', text: '대중교통 접근성은 어떤가요?', scale: '매우 불편~매우 편리' }
+    ]
   },
-
-  // 기타 시설
   {
-    id: 'facilities_1',
-    category: 'facilities',
-    question: '공용 시설(세탁실, 택배함 등)이 잘 관리되나요?',
-    options: ['매우 잘 됨', '잘 됨', '부족함', '매우 부족함'],
-    weight: 2
+    id: 'internet',
+    title: '인터넷',
+    icon: 'ri-wifi-line',
+    description: '인터넷 속도와 안정성',
+    questions: [
+      { id: 'internet_speed', text: '인터넷 속도는 어떤가요?', scale: '매우 느림~매우 빠름' },
+      { id: 'wifi_stability', text: 'WiFi 안정성은 어떤가요?', scale: '매우 불안정~매우 안정' }
+    ]
   }
 ];
 
 export default function DiagnosisSystem({ currentUser, onComplete, onSkip, onGoHome }: DiagnosisSystemProps) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [answers, setAnswers] = useState<DiagnosisFormData>({});
+  const [responses, setResponses] = useState<{[key: string]: number}>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue } = useForm<DiagnosisFormData>();
+  const totalQuestions = categories.reduce((sum, cat) => sum + cat.questions.length, 0);
+  const completedQuestions = Object.keys(responses).length;
 
-  const currentQuestion = DIAGNOSIS_QUESTIONS[currentStep];
-  const progress = ((currentStep + 1) / DIAGNOSIS_QUESTIONS.length) * 100;
+  const handleResponse = (questionId: string, value: number) => {
+    setResponses({...responses, [questionId]: value});
+  };
 
-  const onSubmit = async (data: DiagnosisFormData) => {
-    setIsSubmitting(true);
+  const scrollToNextCategory = (currentIndex: number) => {
+    if (currentIndex < categories.length - 1) {
+      const nextElement = document.getElementById(`category-${currentIndex + 1}`);
+      if (nextElement) {
+        nextElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsLoading(true);
+    
     try {
-      // 점수 계산
-      const categoryScores = calculateCategoryScores(data);
-      const overallScore = calculateOverallScore(categoryScores);
-
-      // 실제 API에서 비교 데이터 가져오기
-      const diagnosisResponses = Object.entries(data).map(([questionId, answer]) => ({
+      // Convert responses to the expected format for bulk submission
+      const diagnosisData = Object.entries(responses).map(([questionId, value]) => ({
+        userId: currentUser.id!,
         questionId,
-        answerValue: getScoreFromAnswer(answer),
-        userId: currentUser.id || '',
+        answerValue: parseInt(value.toString()),
         buildingName: currentUser.buildingName || '',
-        neighborhood: currentUser.neighborhood || '',
-        timestamp: new Date().toISOString()
+        neighborhood: currentUser.neighborhood || ''
       }));
 
-      // 진단 응답 제출
-      await diagnosisApi.submitBulk(diagnosisResponses);
+      const response = await diagnosisApi.submitBulk(diagnosisData);
 
-      // 비교 통계 가져오기
-      const comparisonStats = await diagnosisApi.getComparisonStats(currentUser.id || '');
-      
-      const buildingComparison = {
-        averageScore: comparisonStats.ok ? comparisonStats.data?.buildingAverageScores?.overall || 75 : 75,
-        participantCount: comparisonStats.ok ? comparisonStats.data?.buildingParticipantCount || 12 : 12,
-        rank: 3, // TODO: 실제 순위 계산 로직 구현
-        percentile: 75 // TODO: 실제 백분위 계산 로직 구현
-      };
-
-      const neighborhoodComparison = {
-        averageScore: comparisonStats.ok ? comparisonStats.data?.neighborhoodAverageScores?.overall || 72 : 72,
-        participantCount: comparisonStats.ok ? comparisonStats.data?.neighborhoodParticipantCount || 45 : 45,
-        rank: 8, // TODO: 실제 순위 계산 로직 구현
-        percentile: 82 // TODO: 실제 백분위 계산 로직 구현
-      };
-
-      // 추천사항 생성
-      const recommendations = generateRecommendations(categoryScores);
-
-      const result: ComprehensiveDiagnosis = {
-        id: `diagnosis_${Date.now()}`,
-        userId: currentUser.id || '',
-        overallScore,
-        categoryScores,
-        buildingComparison,
-        neighborhoodComparison,
-        recommendations,
-        createdAt: new Date().toISOString()
-      };
-
-      onComplete(result);
-      toast.success('진단이 완료되었습니다!');
+      if (response.ok) {
+        onComplete(response.data);
+      } else {
+        toast.error('진단 결과 저장에 실패했습니다.');
+      }
     } catch (error) {
-      console.error('Diagnosis error:', error);
-      toast.error('진단 중 오류가 발생했습니다.');
+      console.error('진단 결과 저장 실패:', error);
+      toast.error('진단 결과 저장 중 오류가 발생했습니다.');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const calculateCategoryScores = (answers: DiagnosisFormData): { [category: string]: number } => {
-    const categoryTotals: { [category: string]: { score: number; weight: number } } = {};
-
-    DIAGNOSIS_QUESTIONS.forEach(question => {
-      const answer = answers[question.id];
-      if (answer) {
-        const score = getScoreFromAnswer(answer);
-        if (!categoryTotals[question.category]) {
-          categoryTotals[question.category] = { score: 0, weight: 0 };
-        }
-        categoryTotals[question.category].score += score * question.weight;
-        categoryTotals[question.category].weight += question.weight;
-      }
-    });
-
-    const categoryScores: { [category: string]: number } = {};
-    Object.keys(categoryTotals).forEach(category => {
-      categoryScores[category] = Math.round(
-        (categoryTotals[category].score / categoryTotals[category].weight) * 25
-      );
-    });
-
-    return categoryScores;
+  const isCategoryComplete = (category: any) => {
+    return category.questions.every((q: any) => responses[q.id] !== undefined);
   };
 
-  const calculateOverallScore = (categoryScores: { [category: string]: number }): number => {
-    const scores = Object.values(categoryScores);
-    return Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length);
+  const isAllComplete = () => {
+    return completedQuestions === totalQuestions;
   };
 
-  const getScoreFromAnswer = (answer: string): number => {
-    const scoreMap: { [key: string]: number } = {
-      '전혀 안 들림': 4, '매우 충분함': 4, '매우 일정함': 4, '매우 안전함': 4, '매우 잘 됨': 4, '매우 합리적': 4,
-      '가끔 들림': 3, '충분함': 3, '대체로 일정함': 3, '안전함': 3, '잘 됨': 3, '합리적': 3,
-      '자주 들림': 2, '부족함': 2, '가끔 변함': 2, '불안함': 2, '비쌈': 2,
-      '매우 자주 들림': 1, '매우 부족함': 1, '자주 변함': 1, '매우 불안함': 1, '매우 비쌈': 1,
-      '없음': 4, '1-2번': 3, '3-5번': 2, '매우 자주': 1, '가끔 고장': 2, '자주 고장': 1
-    };
-    return scoreMap[answer] || 2;
-  };
-
-  const generateRecommendations = (categoryScores: { [category: string]: number }): string[] => {
-    const recommendations: string[] = [];
-    
-    Object.entries(categoryScores).forEach(([category, score]) => {
-      if (score < 60) {
-        switch (category) {
-          case 'noise':
-            recommendations.push('소음 문제가 심각합니다. 방음 시설 개선을 요구해보세요.');
-            break;
-          case 'water_pressure':
-            recommendations.push('수압 문제가 있습니다. 급수 시설 점검을 요청해보세요.');
-            break;
-          case 'lighting':
-            recommendations.push('채광이 부족합니다. 조명 시설 개선을 제안해보세요.');
-            break;
-          case 'parking':
-            recommendations.push('주차 공간이 부족합니다. 주차비 할인이나 대안을 요구해보세요.');
-            break;
-          case 'heating':
-            recommendations.push('난방 시설 개선이 필요합니다. 보일러 점검을 요청해보세요.');
-            break;
-          case 'security':
-            recommendations.push('보안 시설 강화가 필요합니다. CCTV나 출입 시스템 개선을 요구해보세요.');
-            break;
-        }
-      }
-    });
-
-    return recommendations.length > 0 ? recommendations : ['전반적으로 양호한 상태입니다.'];
-  };
-
-  const handleNext = () => {
-    if (currentStep < DIAGNOSIS_QUESTIONS.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      // 마지막 단계에서 완료 처리
-      onSubmit(answers);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
-  const handleAnswerChange = (questionId: string, answer: string) => {
-    setAnswers(prev => ({ ...prev, [questionId]: answer }));
-    setValue(questionId, answer);
-  };
-
-  if (currentStep >= DIAGNOSIS_QUESTIONS.length) {
+  if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">진단 완료!</h2>
-            <p className="text-gray-600 mb-6">모든 질문에 답변해주셔서 감사합니다.</p>
-            <div className="space-y-3">
-              <button
-                onClick={() => onSubmit(answers)}
-                disabled={isSubmitting}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 disabled:opacity-50 font-medium"
-              >
-                {isSubmitting ? '결과 생성 중...' : '진단 결과 확인하기'}
-              </button>
-              
-              {onGoHome && (
-                <button
-                  onClick={onGoHome}
-                  className="w-full bg-white text-gray-600 py-2 px-4 rounded-md hover:bg-gray-50 font-medium border border-gray-300"
-                >
-                  🏠 홈으로 돌아가기
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // 첫 번째 질문일 때 스킵 옵션 표시
-  if (currentStep === 0) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white shadow rounded-lg p-6">
-          <div className="mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-bold text-gray-900">우리 집 종합 진단</h2>
-              <span className="text-sm text-gray-500">{currentStep + 1} / {DIAGNOSIS_QUESTIONS.length}</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${((currentStep + 1) / DIAGNOSIS_QUESTIONS.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">거주 환경 진단을 시작합니다</h3>
-            <p className="text-gray-600 mb-6">
-              총 {DIAGNOSIS_QUESTIONS.length}개의 질문으로 구성된 진단을 통해<br/>
-              우리 집의 거주 환경을 종합적으로 분석해드립니다.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={handleNext}
-              className="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 font-medium"
-            >
-              진단 시작하기
-            </button>
-            
-            {onSkip && (
-              <button
-                onClick={onSkip}
-                className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-200 font-medium"
-              >
-                나중에 하기 (스킵)
-              </button>
-            )}
-            
-            {onGoHome && (
-              <button
-                onClick={onGoHome}
-                className="w-full bg-white text-gray-600 py-2 px-4 rounded-md hover:bg-gray-50 font-medium border border-gray-300"
-              >
-                🏠 홈으로 돌아가기
-              </button>
-            )}
-          </div>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              💡 <strong>진단을 완료하시면</strong><br/>
-              • 우리 집 종합 점수 확인<br/>
-              • 같은 건물/동네 이웃과 비교<br/>
-              • 맞춤형 협상 리포트 생성 가능
-            </p>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-20 w-20 border-4 border-blue-200 border-t-blue-600 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">진단 결과 분석 중...</h2>
+          <p className="text-gray-600 mb-4">이웃들과 비교 분석을 진행하고 있습니다</p>
+          <div className="w-64 bg-gray-200 rounded-full h-2 mx-auto">
+            <div className="bg-blue-600 h-2 rounded-full animate-pulse" style={{ width: '75%' }}></div>
           </div>
         </div>
       </div>
@@ -409,79 +191,176 @@ export default function DiagnosisSystem({ currentUser, onComplete, onSkip, onGoH
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow rounded-lg p-6">
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-bold text-gray-900">우리 집 종합 진단</h2>
-            <span className="text-sm text-gray-500">{currentStep + 1} / {DIAGNOSIS_QUESTIONS.length}</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4" ref={containerRef}>
+      <div className="max-w-3xl mx-auto">
+        {/* 헤더 */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 cursor-pointer mb-2 font-['Pacifico']">월세 공동협약</h1>
+          <div className="w-16 h-1 bg-blue-600 mx-auto mb-6 rounded-full"></div>
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">우리 집 종합 진단</h2>
+            <p className="text-gray-600 mb-4">거주 환경을 평가하여 이웃들과 비교 분석해드립니다</p>
+            
+            <div className="bg-blue-50 rounded-xl p-4">
+              <div className="flex items-center justify-between text-blue-800 mb-2">
+                <span className="text-sm font-semibold">진행 상황</span>
+                <span className="text-sm font-semibold">{completedQuestions}/{totalQuestions} 문항 완료</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="mb-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
-              {currentQuestion.question}
-            </h3>
-            
-            <div className="space-y-3">
-              {currentQuestion.options.map((option, index) => (
-                <label key={index} className="flex items-center">
-                  <input
-                    type="radio"
-                    value={option}
-                    {...register(currentQuestion.id, { required: '답변을 선택해주세요' })}
-                    onChange={(e) => handleAnswerChange(currentQuestion.id, e.target.value)}
-                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
-                  />
-                  <span className="ml-3 text-sm text-gray-700">{option}</span>
-                </label>
-              ))}
-            </div>
-            
-            {errors[currentQuestion.id] && (
-              <p className="mt-2 text-sm text-red-600">{errors[currentQuestion.id]?.message}</p>
-            )}
-          </div>
+        {/* 카테고리별 섹션 */}
+        <div className="space-y-12">
+          {categories.map((category, categoryIndex) => (
+            <div 
+              key={category.id} 
+              id={`category-${categoryIndex}`}
+              className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-6">
+                <div className="flex items-center justify-between text-white mb-3">
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
+                      <i className={`${category.icon} text-2xl`}></i>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold">{category.title}</h3>
+                      <p className="text-blue-100 text-sm">{category.description}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold">{categoryIndex + 1}</div>
+                    <div className="text-xs text-blue-100">/ {categories.length}</div>
+                  </div>
+                </div>
+                
+                {isCategoryComplete(category) && (
+                  <div className="flex items-center text-green-200 text-sm">
+                    <i className="ri-check-circle-fill mr-2"></i>
+                    완료됨
+                  </div>
+                )}
+              </div>
 
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              <button
-                type="button"
-                onClick={handlePrevious}
-                disabled={currentStep === 0}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                이전
-              </button>
-              
-              {onGoHome && (
-                <button
-                  type="button"
-                  onClick={onGoHome}
-                  className="px-3 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
-                >
-                  🏠 홈
-                </button>
-              )}
+              <div className="p-8">
+                <div className="space-y-8">
+                  {category.questions.map((question, qIndex) => (
+                    <div key={question.id} className="space-y-4">
+                      <div className="bg-gray-50 rounded-xl p-6">
+                        <h4 className="text-lg font-bold text-gray-800 mb-2">
+                          Q{qIndex + 1}. {question.text}
+                        </h4>
+                        <p className="text-sm text-gray-500 mb-4">
+                          <i className="ri-information-line mr-1"></i>
+                          {question.scale}
+                        </p>
+                        
+                        <div className="grid grid-cols-5 gap-3">
+                          {[1, 2, 3, 4, 5].map((value) => (
+                            <button
+                              key={value}
+                              onClick={() => {
+                                handleResponse(question.id, value);
+                                // 답변 후 잠시 기다린 다음 자동 스크롤 (마지막 질문이 아닌 경우)
+                                if (qIndex === category.questions.length - 1 && categoryIndex < categories.length - 1) {
+                                  setTimeout(() => {
+                                    scrollToNextCategory(categoryIndex);
+                                  }, 500);
+                                }
+                              }}
+                              className={`p-4 text-center rounded-xl border-2 transition-all duration-200 cursor-pointer group ${
+                                responses[question.id] === value
+                                  ? 'border-blue-500 bg-blue-500 text-white shadow-lg'
+                                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                              }`}
+                            >
+                              <div className={`text-2xl font-bold mb-1 ${
+                                responses[question.id] === value ? 'text-white' : 'text-blue-600'
+                              }`}>
+                                {value}
+                              </div>
+                              <div className={`text-xs ${
+                                responses[question.id] === value ? 'text-blue-100' : 'text-gray-500'
+                              }`}>
+                                {value === 1 && '매우 나쁨'}
+                                {value === 2 && '나쁨'}
+                                {value === 3 && '보통'}
+                                {value === 4 && '좋음'}
+                                {value === 5 && '매우 좋음'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 카테고리 완료 표시 및 다음 카테고리 버튼 */}
+                {isCategoryComplete(category) && categoryIndex < categories.length - 1 && (
+                  <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                    <button
+                      onClick={() => scrollToNextCategory(categoryIndex)}
+                      className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors cursor-pointer whitespace-nowrap flex items-center mx-auto"
+                    >
+                      다음 카테고리로
+                      <i className="ri-arrow-down-line ml-2"></i>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
+          ))}
+        </div>
+
+        {/* 완료 버튼 - 항상 표시되지만 조건부 활성화 */}
+        <div className="mt-12 text-center">
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8">
+            {isAllComplete() ? (
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="ri-check-circle-fill text-3xl text-green-600"></i>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">진단 완료!</h3>
+                <p className="text-gray-600">모든 카테고리 평가가 완료되었습니다</p>
+              </div>
+            ) : (
+              <div className="mb-6">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <i className="ri-clipboard-line text-3xl text-blue-600"></i>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">진단 진행 중</h3>
+                <p className="text-gray-600">
+                  {totalQuestions - completedQuestions}개 문항이 더 남았습니다
+                </p>
+              </div>
+            )}
             
             <button
-              type="button"
-              onClick={handleNext}
-              disabled={!answers[currentQuestion.id]}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={isAllComplete() ? handleSubmit : undefined}
+              disabled={!isAllComplete()}
+              className={`px-8 py-4 font-bold text-lg rounded-xl transition-all duration-300 cursor-pointer whitespace-nowrap flex items-center mx-auto ${
+                isAllComplete()
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
             >
-              {currentStep === DIAGNOSIS_QUESTIONS.length - 1 ? '완료' : '다음'}
+              {isAllComplete() ? '결과 확인하기' : '모든 문항을 완료해주세요'}
+              <i className={`ml-2 ${isAllComplete() ? 'ri-arrow-right-line' : 'ri-lock-line'}`}></i>
             </button>
           </div>
-        </form>
+        </div>
+
+        {/* 하단 안내 */}
+        <div className="mt-6 text-center">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-center text-sm text-gray-600">
+              <i className="ri-shield-check-line text-green-600 mr-2"></i>
+              <span>모든 응답은 익명으로 처리되며, 이웃 비교 분석에만 사용됩니다.</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

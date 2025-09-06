@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { User, Notification } from '../types';
 import { notificationApi } from '../lib/api';
 import { formatDateTime } from '../utils/formatting';
+import { webSocketService } from '../lib/websocket';
 
 interface NotificationBellProps {
   currentUser: User;
@@ -17,40 +18,43 @@ export default function NotificationBell({ currentUser }: NotificationBellProps)
   const loadNotifications = useCallback(async () => {
     if (!currentUser?.id) return;
     
-    // TODO: 백엔드 알림 API 구현 후 활성화
-    // 임시로 빈 데이터 설정
-    setNotifications([]);
-    setUnreadCount(0);
-    
-    // try {
-    //   const [notificationsResponse, countResponse] = await Promise.all([
-    //     notificationApi.getNotifications(currentUser.id),
-    //     notificationApi.getUnreadCount(currentUser.id)
-    //   ]);
+    try {
+      const [notificationsResponse, countResponse] = await Promise.all([
+        notificationApi.getUnreadNotifications(),
+        notificationApi.getUnreadCount()
+      ]);
 
-    //   if (notificationsResponse.ok) {
-    //     setNotifications(notificationsResponse.data || []);
-    //   }
-    //   if (countResponse.ok) {
-    //     setUnreadCount(countResponse.data || 0);
-    //   }
-    // } catch (error) {
-    //   // 백엔드 API가 구현되지 않은 경우 조용히 무시
-    //   console.log('Notification API not implemented yet:', error);
-    //   // 임시로 빈 데이터 설정
-    //   setNotifications([]);
-    //   setUnreadCount(0);
-    // }
+      if (notificationsResponse.ok) {
+        setNotifications(notificationsResponse.data || []);
+      }
+      if (countResponse.ok) {
+        setUnreadCount(countResponse.data || 0);
+      }
+    } catch (error) {
+      console.error('알림 로드 실패:', error);
+      setNotifications([]);
+      setUnreadCount(0);
+    }
   }, [currentUser?.id]);
 
-  // 알림 데이터 로드
+  // 알림 데이터 로드 및 WebSocket 연결
   useEffect(() => {
     if (currentUser?.id) {
       loadNotifications();
-      // TODO: 백엔드 알림 API 구현 후 활성화
-      // 30초마다 알림 새로고침
-      // const interval = setInterval(loadNotifications, 30000);
-      // return () => clearInterval(interval);
+      
+      // WebSocket 연결
+      webSocketService.connect(currentUser.id, (notification) => {
+        setNotifications(prev => [notification, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      });
+      
+      // 30초마다 알림 새로고침 (WebSocket이 실패할 경우를 대비)
+      const interval = setInterval(loadNotifications, 30000);
+      
+      return () => {
+        clearInterval(interval);
+        webSocketService.disconnect();
+      };
     }
   }, [currentUser?.id, loadNotifications]);
 

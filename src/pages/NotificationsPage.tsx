@@ -21,23 +21,17 @@ export default function NotificationsPage({ currentUser }: NotificationsPageProp
     
     setLoading(true);
     
-    // TODO: 백엔드 알림 API 구현 후 활성화
-    // 임시로 빈 데이터 설정
-    setNotifications([]);
-    setLoading(false);
-    
-    // try {
-    //   const response = await notificationApi.getNotifications(currentUser.id);
-    //   if (response.ok) {
-    //     setNotifications(response.data || []);
-    //   }
-    // } catch (error) {
-    //   // 백엔드 API가 구현되지 않은 경우 조용히 무시
-    //   console.log('Notification API not implemented yet:', error);
-    //   setNotifications([]);
-    // } finally {
-    //   setLoading(false);
-    // }
+    try {
+      const response = await notificationApi.getNotifications();
+      if (response.ok) {
+        setNotifications(response.data || []);
+      }
+    } catch (error) {
+      console.error('알림 로드 실패:', error);
+      setNotifications([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const markAsRead = async (notificationId: string) => {
