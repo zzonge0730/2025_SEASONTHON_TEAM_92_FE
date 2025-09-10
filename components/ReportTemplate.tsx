@@ -1,6 +1,6 @@
 'use client';
 
-import { ReportTemplate } from '@/types';
+import type { ReportTemplate } from '@/types';
 import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import VerificationBadge from './VerificationBadge';
 
