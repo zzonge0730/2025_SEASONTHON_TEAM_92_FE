@@ -11,6 +11,9 @@ interface ReportPageProps {
   params: Promise<{ id: string }>;
 }
 
+// 동적 라우트이므로 generateStaticParams 제거
+// 대신 동적 렌더링 사용
+
 export default function ReportPage({ params }: ReportPageProps) {
   const [reportId, setReportId] = useState<string | null>(null);
   const [report, setReport] = useState<ReportResponse | null>(null);
