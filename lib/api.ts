@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // API 기본 URL 설정
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.jinwook.shop'; // team_backend의 기본 포트
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://2025seasonthonteam92be-production.up.railway.app'; // Railway 백엔드 서버
 
 // 목업 모드 설정 (백엔드 API가 구현되지 않은 경우)
 const USE_MOCK_DATA = process.env.NEXT_PUBLIC_USE_MOCK_DATA === 'true';
